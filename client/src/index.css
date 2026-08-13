@@ -2019,3 +2019,51 @@ a {
   .mobile-menu-toggle,
   .mobile-fast-track button { transition: none !important; }
 }
+
+/* Hero form interaction polish: decorative outline stays visual-only; fields remain native, editable controls. */
+.Main > [data-node-id="46-556"] [data-node-id="46-584"] {
+  pointer-events: none !important;
+}
+
+.Main > [data-node-id="46-556"] [data-node-id="46-585"] {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.Main > [data-node-id="46-556"] [data-node-id="46-591"] input {
+  display: block !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  color: var(--bv-text) !important;
+  cursor: text;
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 2;
+}
+
+.Main > [data-node-id="46-556"] [data-node-id="46-591"] input:user-invalid {
+  outline-color: rgba(255, 132, 132, 0.76) !important;
+  box-shadow: 0 0 0 3px rgba(255, 132, 132, 0.08);
+}
+
+.Main > [data-node-id="46-556"] [data-node-id="46-592"] {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (min-width: 641px) {
+  .Main > [data-node-id="46-556"] [data-node-id="46-592"] > [data-node-id="46-593"],
+  .Main > [data-node-id="46-556"] [data-node-id="46-592"] > [data-node-id="46-596"] {
+    flex: 1 1 0 !important;
+    width: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .Main > [data-node-id="46-556"] [data-node-id="46-592"] > [data-node-id="46-593"],
+  .Main > [data-node-id="46-556"] [data-node-id="46-592"] > [data-node-id="46-596"] {
+    flex: none !important;
+    width: 100% !important;
+  }
+}
