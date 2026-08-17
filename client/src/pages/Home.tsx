@@ -1,4 +1,4 @@
-// Style reminder: preserve the Boost Vertex Figma recreation — obsidian surfaces, electric-lime actions, Chivo headlines, Inter body copy, and an 8px rhythm.
+
 import { useEffect, useState } from "react";
 
 export default function Home() {
@@ -43,6 +43,8 @@ export default function Home() {
       <a href="#case-studies" onClick={() => setMobileMenuOpen(false)}>Case Studies</a>
       <a href="#blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
       <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
+      <a href="/about" onClick={() => setMobileMenuOpen(false)}>About</a>
+
       <button type="button" onClick={jumpToContact}>Book a Strategy Call</button>
     </div>
     <div data-layer="Container" data-node-id="46-514" className="Container flex justify-start items-center gap-8">
@@ -52,7 +54,7 @@ export default function Home() {
       <a href="#case-studies" aria-label="Case Studies" data-layer="Link" data-node-id="46-517" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
         <div data-layer="Text" data-node-id="46-518" className="Text justify-center text-[#c4c9ac] text-base font-normal font-['Inter']">Case Studies</div>
       </a>
-      <a href="#top" aria-label="About" data-layer="Link" data-node-id="46-519" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
+      <a href="/about" aria-label="About" data-layer="Link" data-node-id="46-519" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
         <div data-layer="Text" data-node-id="46-520" className="Text justify-center text-[#c4c9ac] text-base font-normal font-['Inter']">About</div>
       </a>
       <a href="#blog" aria-label="Blog" data-layer="Link" data-node-id="46-521" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
