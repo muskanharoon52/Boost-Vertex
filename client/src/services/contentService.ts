@@ -44,6 +44,24 @@ export interface CaseStudyPage {
   hasNextPage: boolean;
 }
 
+export interface BlogPostContent {
+  id: string;
+  slug: string;
+  category: string;
+  title: string;
+  summary: string;
+  image: string;
+  readTime?: string;
+}
+
+export interface BlogPostPage {
+  items: BlogPostContent[];
+  page: number;
+  limit: number;
+  total: number;
+  hasNextPage: boolean;
+}
+
 export const contentService = {
   listServices() {
     return apiRequest<ApiEnvelope<ServiceCardContent[]>>("/services");
@@ -56,5 +74,8 @@ export const contentService = {
   },
   getCaseStudySummary() {
     return apiRequest<ApiEnvelope<{ adSpendManaged: string; averageRoi: string; clientRetention: string }>>("/case-studies/summary");
+  },
+  listBlogPosts(query = "") {
+    return apiRequest<ApiEnvelope<BlogPostPage>>(`/blog${query}`);
   },
 };

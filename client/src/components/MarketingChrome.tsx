@@ -4,7 +4,7 @@ import { Link } from "wouter";
 // Marketing chrome style contract: compact obsidian navigation, electric-lime conversion accents,
 // Chivo display typography, accessible mobile routing, and route-scoped footer variants that preserve approved pages.
 
-type ActiveRoute = "services" | "case-studies" | "about";
+type ActiveRoute = "services" | "case-studies" | "about" | "blog";
 
 const fastTrackActions = [
   { label: "Call", icon: "/46-537.svg" },
@@ -26,7 +26,7 @@ export function MarketingHeader({ active }: { active: ActiveRoute }) {
           <Link href="/services" aria-current={active === "services" ? "page" : undefined}>Services</Link>
           <Link href="/case-studies" aria-current={active === "case-studies" ? "page" : undefined}>Case Studies</Link>
           <Link href="/about" aria-current={active === "about" ? "page" : undefined}>About</Link>
-          <a href="/#blog">Blog</a>
+          <Link href="/blog" aria-current={active === "blog" ? "page" : undefined}>Blog</Link>
           <a href="/#contact">Contact</a>
         </nav>
         <div className="mv-header__actions">
@@ -42,7 +42,7 @@ export function MarketingHeader({ active }: { active: ActiveRoute }) {
         <Link href="/services" onClick={closeMenu}>Services</Link>
         <Link href="/case-studies" onClick={closeMenu}>Case Studies</Link>
         <Link href="/about" onClick={closeMenu}>About</Link>
-        <a href="/#blog" onClick={closeMenu}>Blog</a>
+        <Link href="/blog" onClick={closeMenu}>Blog</Link>
         <a href="/#contact" onClick={closeMenu}>Contact</a>
         <a href="/#contact" className="mv-button" data-action="book-strategy-call" onClick={closeMenu}>Book a Strategy Call</a>
       </nav>
@@ -72,7 +72,7 @@ export function MarketingFooter({ variant = "default" }: { variant?: "default" |
           <h2>COMPANY</h2>
           <Link href="/about">About Us</Link>
           <Link href="/case-studies">Case Studies</Link>
-          <a href="/#blog">Resources</a>
+          <Link href="/blog">Resources</Link>
           <a href="/#contact">Contact</a>
           {isServices && <div className="mv-footer__mobile-copy"><Link href="/about">About Us</Link><a href="/#careers">Careers</a><Link href="/case-studies">Case Studies</Link><a href="/#contact">Contact</a></div>}
         </div>

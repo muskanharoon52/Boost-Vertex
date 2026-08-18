@@ -44,7 +44,7 @@ export default function Home() {
       <a href="/services" onClick={() => setMobileMenuOpen(false)}>Services</a>
       <a href="/case-studies" onClick={() => setMobileMenuOpen(false)}>Case Studies</a>
       <a href="/about" onClick={() => setMobileMenuOpen(false)}>About</a>
-      <a href="#blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
+      <a href="/blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
       <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
       <button type="button" onClick={jumpToContact}>Book a Strategy Call</button>
     </div>
@@ -58,7 +58,7 @@ export default function Home() {
       <a href="/about" aria-label="About" data-layer="Link" data-node-id="46-519" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
         <div data-layer="Text" data-node-id="46-520" className="Text justify-center text-[#c4c9ac] text-base font-normal font-['Inter']">About</div>
       </a>
-      <a href="#blog" aria-label="Blog" data-layer="Link" data-node-id="46-521" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
+      <a href="/blog" aria-label="Blog" data-layer="Link" data-node-id="46-521" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
         <div data-layer="Text" data-node-id="46-522" className="Text justify-center text-[#c4c9ac] text-base font-normal font-['Inter']">Blog</div>
       </a>
       <a href="#contact" aria-label="Contact" data-layer="Link" data-node-id="46-523" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">

@@ -9,25 +9,25 @@ const team = [
     name: "Sarah Jenkins",
     role: "CEO & Founder",
     summary: "Expert in data-driven strategies and scaling businesses.",
-    image: "/about/sarah-jenkins.png",
+    image: "/boost-vertex-sarah-jenkins.png",
   },
   {
     name: "David Chen",
     role: "Head of Strategy",
     summary: "Specializes in technical SEO and conversion optimization.",
-    image: "/about/david-chen.png",
+    image: "/boost-vertex-david-chen.png",
   },
   {
     name: "Markus Rodriguez",
     role: "Creative / Paid Media",
     summary: "Leads our paid media team with a focus on high ROAS.",
-    image: "/about/markus-rodriguez.png",
+    image: "/boost-vertex-markus-rodriguez.png",
   },
   {
     name: "Elena Vance",
     role: "Lead Data Analyst",
     summary: "Expert in data-driven strategies and scaling client revenue.",
-    image: "/about/elena-vance.png",
+    image: "/boost-vertex-elena-vance.png",
   },
 ];
 
@@ -158,7 +158,7 @@ export default function About() {
             <a href="/#services">Services</a>
             <a href="/#case-studies">Case Studies</a>
             <Link href="/about" aria-current="page">About</Link>
-            <a href="/#blog">Blog</a>
+            <Link href="/blog">Blog</Link>
             <a href="/#contact">Contact</a>
           </nav>
           <div className="about-header__actions">
@@ -184,7 +184,7 @@ export default function About() {
           <a href="/#services" onClick={() => setMobileMenuOpen(false)}>Services</a>
           <a href="/#case-studies" onClick={() => setMobileMenuOpen(false)}>Case Studies</a>
           <Link href="/about" onClick={() => setMobileMenuOpen(false)} aria-current="page">About</Link>
-          <a href="/#blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
+          <Link href="/blog" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
           <a href="/#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
           <a href="/#contact" className="about-button" data-action="book-strategy-call" onClick={() => setMobileMenuOpen(false)}>Book a Call</a>
         </nav>
@@ -206,7 +206,7 @@ export default function About() {
               </div>
             </div>
             <figure className="about-hero__visual">
-              <img src="/about/hero-office.png" alt="Boost Vertex strategists working together in a meeting" />
+              <img src="/boost-vertex-about-hero-office.png" alt="Boost Vertex strategists working together in a meeting" />
               <aside className="about-fast-track" aria-label="Fast Track actions">
                 <span>Fast Track</span>
                 {heroRail.map((item) => (
