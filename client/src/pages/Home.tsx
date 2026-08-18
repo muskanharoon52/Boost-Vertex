@@ -1,5 +1,7 @@
-
+// Style reminder: preserve the Boost Vertex Figma recreation — obsidian surfaces, electric-lime actions, Chivo headlines, Inter body copy, and an 8px rhythm.
 import { useEffect, useState } from "react";
+
+// Boost Vertex Home style contract: preserve the Figma-locked desktop and mobile hero composition while routing About to its dedicated page.
 
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -39,16 +41,15 @@ export default function Home() {
       <span />
     </button>
     <div className={`mobile-menu-panel ${mobileMenuOpen ? "is-open" : ""}`} aria-hidden={!mobileMenuOpen}>
-      <a href="#services" onClick={() => setMobileMenuOpen(false)}>Services</a>
+      <a href="/services" onClick={() => setMobileMenuOpen(false)}>Services</a>
       <a href="#case-studies" onClick={() => setMobileMenuOpen(false)}>Case Studies</a>
+      <a href="/about" onClick={() => setMobileMenuOpen(false)}>About</a>
       <a href="#blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
       <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
-      <a href="/about" onClick={() => setMobileMenuOpen(false)}>About</a>
-
       <button type="button" onClick={jumpToContact}>Book a Strategy Call</button>
     </div>
     <div data-layer="Container" data-node-id="46-514" className="Container flex justify-start items-center gap-8">
-      <a href="#services" aria-label="Services" data-layer="Link" data-node-id="46-515" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
+      <a href="/services" aria-label="Services" data-layer="Link" data-node-id="46-515" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
         <div data-layer="Text" data-node-id="46-516" className="Text justify-center text-[#c4c9ac] text-base font-normal font-['Inter']">Services</div>
       </a>
       <a href="#case-studies" aria-label="Case Studies" data-layer="Link" data-node-id="46-517" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
