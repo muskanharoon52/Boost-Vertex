@@ -42,7 +42,7 @@ export default function Home() {
     </button>
     <div className={`mobile-menu-panel ${mobileMenuOpen ? "is-open" : ""}`} aria-hidden={!mobileMenuOpen}>
       <a href="/services" onClick={() => setMobileMenuOpen(false)}>Services</a>
-      <a href="#case-studies" onClick={() => setMobileMenuOpen(false)}>Case Studies</a>
+      <a href="/case-studies" onClick={() => setMobileMenuOpen(false)}>Case Studies</a>
       <a href="/about" onClick={() => setMobileMenuOpen(false)}>About</a>
       <a href="#blog" onClick={() => setMobileMenuOpen(false)}>Blog</a>
       <a href="#contact" onClick={() => setMobileMenuOpen(false)}>Contact</a>
@@ -52,7 +52,7 @@ export default function Home() {
       <a href="/services" aria-label="Services" data-layer="Link" data-node-id="46-515" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
         <div data-layer="Text" data-node-id="46-516" className="Text justify-center text-[#c4c9ac] text-base font-normal font-['Inter']">Services</div>
       </a>
-      <a href="#case-studies" aria-label="Case Studies" data-layer="Link" data-node-id="46-517" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
+      <a href="/case-studies" aria-label="Case Studies" data-layer="Link" data-node-id="46-517" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">
         <div data-layer="Text" data-node-id="46-518" className="Text justify-center text-[#c4c9ac] text-base font-normal font-['Inter']">Case Studies</div>
       </a>
       <a href="/about" aria-label="About" data-layer="Link" data-node-id="46-519" className="Link px-3 py-2 rounded-xl inline-flex flex-col justify-start items-start">

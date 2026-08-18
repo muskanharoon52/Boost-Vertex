@@ -1,6 +1,6 @@
 // Marketing content contract: Figma-referenced preview content mirrors the future API shapes in contentService.ts.
 
-import type { CaseStudyCardContent, ServiceCardContent, ServiceDetailContent } from "@/services/contentService.ts";
+import type { CaseStudyCardContent, ServiceCardContent, ServiceDetailContent } from "@/services/contentService";
 
 export const services: ServiceCardContent[] = [
   { id: "service-01", slug: "technical-content-seo", title: "Technical & Content SEO", summary: "Dominate search results with structural optimization and high-intent content strategies that drive compounding organic traffic.", outcomes: ["Technical Audits & Core Web Vitals", "High-Intent Keyword Strategy", "Programmatic SEO Builds"], metricValue: "Avg. +138% Organic Traffic", metricLabel: "SEO growth" },
@@ -12,14 +12,15 @@ export const services: ServiceCardContent[] = [
 ];
 
 export const caseStudies: CaseStudyCardContent[] = [
-  { id: "case-01", slug: "cloudsync-tech", clientName: "CloudSync Tech", industry: "SaaS", metricValue: "+185%", metricLabel: "Lead Volume", summary: "Restructuring ad accounts to target high-intent enterprise buyers, reducing wasted spend.", services: ["Paid Social", "Landing Pages"] },
-  { id: "case-02", slug: "vitalis-health-net", clientName: "Vitalis Health Net", industry: "Healthcare", metricValue: "+89%", metricLabel: "MQL Growth", summary: "Establishing topical authority in a YMYL niche through expert-reviewed content clusters.", services: ["SEO", "Content"] },
-  { id: "case-03", slug: "apex-freight", clientName: "Apex Freight", industry: "Logistics", metricValue: "-45%", metricLabel: "Cost Per Lead", summary: "Optimized paid search campaigns to target enterprise logistics contacts, reducing wasted ad spend.", services: ["Search", "Analytics"] },
-  { id: "case-04", slug: "learnsphere", clientName: "LearnSphere", industry: "EdTech", metricValue: "3.2x", metricLabel: "User Acquisition", summary: "Multi-channel social strategy combined with high-value lead magnets to accelerate user sign-ups.", services: ["Paid Social", "Creative"] },
-  { id: "case-05", slug: "lumina-retail", clientName: "Lumina Retail", industry: "E-commerce", metricValue: "+2.4%", metricLabel: "Conversion Rate", summary: "Frictionless checkout redesign utilizing heat mapping and A/B multivariate testing.", services: ["Web Design", "CRO"] },
-  { id: "case-06", slug: "northstar-finance", clientName: "Northstar Finance", industry: "Fintech", metricValue: "+124%", metricLabel: "Qualified Leads", summary: "Compliance-aware acquisition system built around high-intent audience signals.", services: ["SEO", "Search"] },
-  { id: "case-07", slug: "harborline", clientName: "Harborline", industry: "Real Estate", metricValue: "4.1x", metricLabel: "Pipeline ROI", summary: "Local market targeting and performance reporting connected marketing investment to pipeline.", services: ["Analytics", "Search"] },
-  { id: "case-08", slug: "fieldcraft", clientName: "Fieldcraft", industry: "B2B", metricValue: "+62%", metricLabel: "SQL Rate", summary: "Content-led outbound program introduced a consistent qualified-sales-opportunity flow.", services: ["Outbound", "Content"] },
+  { id: "case-01", slug: "nexus-capital-partners", clientName: "Nexus Capital Partners", industry: "Fintech", metricValue: "+412%", metricLabel: "Organic Traffic", summary: "Dominating competitive financial SERPs through technical infrastructure overhaul and authority building.", services: ["SEO", "Content"] },
+  { id: "case-02", slug: "cloudsync-tech", clientName: "CloudSync Tech", industry: "SaaS", metricValue: "+185%", metricLabel: "Lead Volume", summary: "Restructuring ad accounts to target high-intent enterprise buyers, reducing wasted spend.", services: ["Paid Social", "Landing Pages"] },
+  { id: "case-03", slug: "lumina-retail", clientName: "Lumina Retail", industry: "E-commerce", metricValue: "+2.4%", metricLabel: "Conversion Rate", summary: "Frictionless checkout redesign utilizing heat mapping and A/B multivariate testing.", services: ["Web Design", "CRO"] },
+  { id: "case-04", slug: "vitalis-health-net", clientName: "Vitalis Health Net", industry: "Healthcare", metricValue: "+89%", metricLabel: "MQL Growth", summary: "Establishing topical authority in a YMYL niche through expert-reviewed comprehensive content clusters.", services: ["SEO", "Content"] },
+  { id: "case-05", slug: "apex-freight", clientName: "Apex Freight", industry: "Logistics", metricValue: "-45%", metricLabel: "Cost Per Lead", summary: "Optimized paid search campaigns to target enterprise logistics contacts, reducing wasted ad spend.", services: ["Search", "Analytics"] },
+  { id: "case-06", slug: "learnsphere", clientName: "LearnSphere", industry: "EdTech", metricValue: "3.2x", metricLabel: "User Acquisition", summary: "Multi-channel social strategy combined with high-value lead magnets to accelerate user sign-ups.", services: ["Paid Social", "Creative"] },
+  { id: "case-07", slug: "northstar-finance", clientName: "Northstar Finance", industry: "Fintech", metricValue: "+124%", metricLabel: "Qualified Leads", summary: "Compliance-aware acquisition system built around high-intent audience signals.", services: ["SEO", "Search"] },
+  { id: "case-08", slug: "harborline", clientName: "Harborline", industry: "Real Estate", metricValue: "4.1x", metricLabel: "Pipeline ROI", summary: "Local market targeting and performance reporting connected marketing investment to pipeline.", services: ["Analytics", "Search"] },
+  { id: "case-09", slug: "fieldcraft", clientName: "Fieldcraft", industry: "B2B", metricValue: "+62%", metricLabel: "SQL Rate", summary: "Content-led outbound program introduced a consistent qualified-sales-opportunity flow.", services: ["Outbound", "Content"] },
 ];
 
 const baseCapabilities = [
