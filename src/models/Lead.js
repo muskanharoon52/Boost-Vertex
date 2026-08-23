@@ -25,6 +25,17 @@ const leadSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    monthlyBudget: {
+      type: String,
+      enum: [
+        'Under PKR 50,000',
+        'PKR 50,000–100,000',
+        'PKR 100,000–250,000',
+        'PKR 250,000–500,000',
+        'PKR 500,000+',
+      ],
+      trim: true,
+    },
     message: {
       type: String,
       trim: true,

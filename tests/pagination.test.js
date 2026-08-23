@@ -141,6 +141,9 @@ test('GET /api/testimonials supports pagination', async () => {
       quote: `Great service ${i}`,
       rating: 5,
       isPublished: true,
+      isDraft: false,
+      isApproved: true,
+      permissionGranted: true,
     });
   }
   await Testimonial.insertMany(testimonials);

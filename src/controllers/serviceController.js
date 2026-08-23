@@ -2,7 +2,12 @@ const Service = require('../models/Service');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/pagination');
 
 const normalizeServicePayload = (payload) => {
-  const { title, slug, summary, description, features, seoTitle, seoDescription, isPublished } = payload;
+  const {
+    title, slug, summary, description, features, whoNeedsThisService, problemsWeSolve,
+    approach, deliverables, expectedOutcomes, benefits, faqs, cta, primaryKeyword,
+    secondaryKeywords, searchIntent, internalLinkingRecommendations, relatedCaseStudies,
+    image, seoTitle, seoDescription, sortOrder, isFeatured, isPublished,
+  } = payload;
 
   if (!title || !title.trim()) {
     throw new Error('Title is required');
@@ -30,8 +35,24 @@ const normalizeServicePayload = (payload) => {
     summary: summary.trim(),
     description: description.trim(),
     features: Array.isArray(features) ? features.map((item) => String(item).trim()).filter(Boolean) : [],
+    whoNeedsThisService: whoNeedsThisService ? whoNeedsThisService.trim() : undefined,
+    problemsWeSolve: Array.isArray(problemsWeSolve) ? problemsWeSolve.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    approach: Array.isArray(approach) ? approach.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    deliverables: Array.isArray(deliverables) ? deliverables.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    expectedOutcomes: Array.isArray(expectedOutcomes) ? expectedOutcomes.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    benefits: Array.isArray(benefits) ? benefits.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    faqs: Array.isArray(faqs) ? faqs.map((item) => ({ question: String(item?.question || '').trim(), answer: String(item?.answer || '').trim() })) : [],
+    cta: cta ? cta.trim() : undefined,
+    primaryKeyword: primaryKeyword ? primaryKeyword.trim() : undefined,
+    secondaryKeywords: Array.isArray(secondaryKeywords) ? secondaryKeywords.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    searchIntent: searchIntent ? searchIntent.trim() : undefined,
+    internalLinkingRecommendations: Array.isArray(internalLinkingRecommendations) ? internalLinkingRecommendations.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    relatedCaseStudies: Array.isArray(relatedCaseStudies) ? relatedCaseStudies.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    image: image ? image.trim() : undefined,
     seoTitle: seoTitle ? seoTitle.trim() : undefined,
     seoDescription: seoDescription ? seoDescription.trim() : undefined,
+    sortOrder: Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : 0,
+    isFeatured: typeof isFeatured === 'boolean' ? isFeatured : false,
     isPublished: typeof isPublished === 'boolean' ? isPublished : true,
   };
 };

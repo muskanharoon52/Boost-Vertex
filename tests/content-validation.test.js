@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const request = require('supertest');
 
 const app = require('../src/app');
+const { loginAsAdmin } = require('./helpers/adminTestAuth');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/boost-vetex';
 
@@ -12,14 +13,8 @@ let token = '';
 test.before(async () => {
   await mongoose.connect(MONGO_URI);
 
-  const loginResponse = await request(app)
-    .post('/api/auth/login')
-    .send({
-      email: 'admin@boostvertex.com',
-      password: 'admin123',
-    });
-
-  token = loginResponse.body.token;
+  const login = await loginAsAdmin(app, request);
+  token = login.token;
 });
 
 test.after(async () => {

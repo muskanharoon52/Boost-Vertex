@@ -728,7 +728,7 @@ Example backend configuration:
 PORT=5000
 NODE_ENV=development
 
-MONGODB_URI=your_mongodb_connection_string
+MONGO_URI=your_mongodb_connection_string
 
 JWT_SECRET=your_jwt_secret
 

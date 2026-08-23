@@ -10,6 +10,13 @@ const normalizeCaseStudyPayload = (payload) => {
     service,
     challenge,
     solution,
+    whatWeDid,
+    capabilities,
+    relatedServices,
+    client,
+    cta,
+    isFeatured,
+    media,
     results,
     testimonial,
     seoTitle,
@@ -37,7 +44,7 @@ const normalizeCaseStudyPayload = (payload) => {
     throw new Error('Challenge is required');
   }
 
-  if (!solution || !solution.trim()) {
+  if ((!solution || !solution.trim()) && (!whatWeDid || !whatWeDid.trim())) {
     throw new Error('Solution is required');
   }
 
@@ -56,7 +63,14 @@ const normalizeCaseStudyPayload = (payload) => {
     industry: industry.trim(),
     service: service.trim(),
     challenge: challenge.trim(),
-    solution: solution.trim(),
+    solution: solution ? solution.trim() : whatWeDid.trim(),
+    whatWeDid: whatWeDid ? whatWeDid.trim() : solution.trim(),
+    capabilities: Array.isArray(capabilities) ? capabilities.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    relatedServices: Array.isArray(relatedServices) ? relatedServices.map(String).map((item) => item.trim()).filter(Boolean) : [],
+    client: client || undefined,
+    cta: cta ? cta.trim() : undefined,
+    isFeatured: typeof isFeatured === 'boolean' ? isFeatured : false,
+    media: Array.isArray(media) ? media.map(String).map((item) => item.trim()).filter(Boolean) : [],
     results: Array.isArray(results)
       ? results.map((item) => ({
           metric: item?.metric ? String(item.metric).trim() : '',

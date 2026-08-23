@@ -34,6 +34,25 @@ The app includes these route groups:
 BASE_URL=http://localhost:5000/api
 ```
 
+### Production (current site)
+
+```text
+PUBLIC_SITE_URL=https://boostvertex.com
+```
+
+If API is hosted under the same domain:
+
+```text
+BASE_URL=https://boostvertex.com/api
+```
+
+Recommended frontend env:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_RECAPTCHA_SITE_KEY=<your_site_key>
+```
+
 ### Example frontend usage
 
 ```js
@@ -60,7 +79,7 @@ Body:
 
 ```json
 {
-  "email": "admin@boostvertex.com",
+  "email": "boostvertex@gmail.com",
   "password": "admin123"
 }
 ```
@@ -71,7 +90,7 @@ Success response:
 {
   "_id": "64b5c1112dbd9d7e9e1f2f09",
   "name": "Boost Vertex Admin",
-  "email": "admin@boostvertex.com",
+  "email": "boostvertex@gmail.com",
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
@@ -200,13 +219,13 @@ Example response:
   "data": [
     {
       "_id": "507f1f77bcf86cd799439011",
-      "title": "SEO Growth Strategy",
-      "slug": "seo-growth-strategy",
-      "summary": "Boost your search visibility",
-      "description": "Comprehensive SEO strategy...",
-      "features": ["Keyword research", "Technical SEO"],
-      "seoTitle": "SEO Growth Services",
-      "seoDescription": "Professional SEO services",
+      "title": "Meta Ads Management",
+      "slug": "meta-ads-management",
+      "summary": "Facebook and Instagram advertising built for customer acquisition.",
+      "description": "Boost Vertex's primary service: Meta Ads focused on lead generation, conversions, audience targeting, retargeting, creative testing, and conversion tracking.",
+      "features": ["Meta Ads", "Facebook Ads", "Instagram Ads", "Lead generation", "Conversion tracking", "Creative testing"],
+      "seoTitle": "Meta Ads Management",
+      "seoDescription": "Meta Ads management for qualified lead generation.",
       "isPublished": true,
       "createdAt": "2026-08-13T10:00:00.000Z"
     }
@@ -214,9 +233,9 @@ Example response:
   "pagination": {
     "page": 1,
     "limit": 10,
-    "total": 25,
-    "totalPages": 3,
-    "hasNextPage": true,
+    "total": 6,
+    "totalPages": 1,
+    "hasNextPage": false,
     "hasPrevPage": false
   }
 }
@@ -236,7 +255,7 @@ GET /api/services/:slug
 Example:
 
 ```http
-GET /api/services/seo-growth-strategy
+GET /api/services/meta-ads-management
 ```
 
 Use this for:
@@ -254,17 +273,19 @@ Typical blog object:
 ```json
 {
   "_id": "...",
-  "title": "Digital Marketing Strategy",
-  "slug": "digital-marketing-strategy",
-  "excerpt": "A complete guide to modern digital marketing.",
-  "content": "Full blog content here...",
+  "title": "...",
+  "slug": "...",
+  "excerpt": "...",
+  "content": "...",
   "category": "Marketing",
-  "tags": ["SEO", "Content", "Strategy"],
+  "tags": ["..."],
   "author": "Boost Vertex",
   "isPublished": true,
   "createdAt": "2026-08-13T10:00:00.000Z"
 }
 ```
+
+Note: blogs are CMS-driven and may be empty until published from admin.
 
 ### 5.4 Get a single blog by slug
 
@@ -283,18 +304,17 @@ Typical case study object:
 ```json
 {
   "_id": "...",
-  "title": "E-commerce Growth Success",
-  "slug": "ecommerce-growth-success",
-  "clientName": "ABC E-commerce",
-  "industry": "E-commerce",
-  "service": "Digital Marketing",
-  "challenge": "Low online sales conversion.",
-  "solution": "Implemented targeted PPC campaigns and optimized product pages.",
+  "title": "MovePro Pakistan",
+  "slug": "movepro-pakistan",
+  "clientName": "MovePro Pakistan",
+  "industry": "Transport & Logistics",
+  "service": "Meta Ads + Lead Generation",
+  "challenge": "MovePro Pakistan needed a reliable way to generate relevant prospects through paid advertising.",
+  "solution": "Built and optimized a Meta Ads lead-generation strategy focused on relevant, business-ready prospects.",
   "results": [
-    { "metric": "Sales Growth", "description": "250% increase in 6 months" },
-    { "metric": "ROI", "description": "5:1 return on ad spend" }
+    { "metric": "Known outcome", "description": "High-quality and mature leads were generated, and the client was satisfied with the prospect quality." }
   ],
-  "testimonial": "Boost Vertex transformed our online business.",
+  "whatWeDid": "Built and optimized a Meta Ads lead-generation strategy focused on relevant, business-ready prospects.",
   "isPublished": true,
   "createdAt": "2026-08-13T10:00:00.000Z"
 }
@@ -329,14 +349,18 @@ Example response:
 ```json
 {
   "companyName": "Boost Vertex",
-  "phone": "+1 (555) 123-4567",
-  "email": "hello@boostvertex.com",
-  "address": "Lahore, Pakistan",
+  "phone": "03032799987",
+  "whatsapp": "03032799987",
+  "email": "boostvertex@gmail.com",
+  "salesEmail": "boostvertex@gmail.com",
+  "address": "Blue Area, Islamabad, Pakistan",
+  "workingHours": "Monday-Saturday, 10:00 AM-7:00 PM",
+  "bookingUrl": null,
   "websiteUrl": "https://boostvertex.com",
   "socialLinks": {
-    "facebook": "https://facebook.com",
-    "instagram": "https://instagram.com",
-    "linkedin": "https://linkedin.com"
+    "facebook": "https://www.facebook.com/adswithboostvertex",
+    "instagram": "https://www.instagram.com/boostvertex",
+    "linkedin": "https://www.linkedin.com/company/boost-vertex-pk/"
   }
 }
 ```
@@ -360,15 +384,19 @@ Body:
 
 ```json
 {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "phone": "+923001234567",
+  "name": "Muhammad Ali",
+  "email": "ali@example.com",
+  "phone": "03032799987",
   "company": "Example Company",
-  "serviceInterest": "SEO",
-  "message": "We want to grow our brand.",
-  "source": "website"
+  "serviceInterest": "Meta Ads Management",
+  "monthlyBudget": "PKR 100,000–250,000",
+  "message": "We need qualified leads.",
+  "source": "website",
+  "recaptchaToken": "token-from-google"
 }
 ```
+
+Production note: when `RECAPTCHA_SECRET_KEY` is configured, missing token returns `400` and invalid token returns `403`.
 
 Success response:
 
@@ -377,8 +405,8 @@ Success response:
   "message": "Lead submitted successfully",
   "lead": {
     "_id": "507f1f77bcf86cd799439011",
-    "name": "John Doe",
-    "email": "john@example.com"
+    "name": "Muhammad Ali",
+    "email": "ali@example.com"
   }
 }
 ```
@@ -432,8 +460,8 @@ Typical response:
   "recentLeads": [
     {
       "_id": "...",
-      "name": "John Doe",
-      "email": "john@example.com",
+      "name": "Muhammad Ali",
+      "email": "ali@example.com",
       "status": "new",
       "isRead": false,
       "createdAt": "2026-08-13T10:00:00.000Z"
@@ -466,12 +494,13 @@ Admin lead object:
 ```json
 {
   "_id": "...",
-  "name": "John Doe",
-  "email": "john@example.com",
-  "phone": "+923001234567",
+  "name": "Muhammad Ali",
+  "email": "ali@example.com",
+  "phone": "03032799987",
   "company": "Example Company",
-  "serviceInterest": "SEO",
-  "message": "We want to grow our brand.",
+  "serviceInterest": "Meta Ads Management",
+  "monthlyBudget": "PKR 100,000–250,000",
+  "message": "We need qualified leads.",
   "source": "website",
   "status": "new",
   "isRead": false,
@@ -615,18 +644,18 @@ Body example:
 
 ```json
 {
-  "title": "E-commerce Growth Success",
-  "slug": "ecommerce-growth-success",
-  "clientName": "ABC E-commerce",
-  "industry": "E-commerce",
-  "service": "Digital Marketing",
-  "challenge": "Low online sales conversion.",
-  "solution": "Implemented targeted PPC campaigns and optimized product pages.",
+  "title": "Whizpool",
+  "slug": "whizpool",
+  "clientName": "Whizpool",
+  "industry": "Technology / Software",
+  "service": "Social Media Management / LinkedIn Content / Meta Ads",
+  "challenge": "Whizpool needed stronger social media content and visibility to unlock organic lead opportunities.",
+  "solution": "Developed LinkedIn-focused content and social media activity to improve visibility and engagement.",
+  "whatWeDid": "Developed LinkedIn-focused content and social media activity to improve visibility and engagement.",
+  "capabilities": ["Social Media Management", "LinkedIn Content", "Meta Ads"],
   "results": [
-    { "metric": "Sales Growth", "description": "250% increase in 6 months" },
-    { "metric": "ROI", "description": "5:1 return on ad spend" }
+    { "metric": "Known outcome", "description": "Whizpool started receiving organic leads through LinkedIn." }
   ],
-  "testimonial": "Boost Vertex transformed our online business.",
   "isPublished": true
 }
 ```
@@ -684,14 +713,17 @@ Example body:
 ```json
 {
   "companyName": "Boost Vertex",
-  "phone": "+1 (555) 123-4567",
-  "email": "hello@boostvertex.com",
-  "address": "Lahore, Pakistan",
+  "phone": "03032799987",
+  "whatsapp": "03032799987",
+  "email": "boostvertex@gmail.com",
+  "salesEmail": "boostvertex@gmail.com",
+  "address": "Blue Area, Islamabad, Pakistan",
+  "workingHours": "Monday-Saturday, 10:00 AM-7:00 PM",
   "websiteUrl": "https://boostvertex.com",
   "socialLinks": {
-    "facebook": "https://facebook.com",
-    "instagram": "https://instagram.com",
-    "linkedin": "https://linkedin.com"
+    "facebook": "https://www.facebook.com/adswithboostvertex",
+    "instagram": "https://www.instagram.com/boostvertex",
+    "linkedin": "https://www.linkedin.com/company/boost-vertex-pk/"
   }
 }
 ```
@@ -905,8 +937,10 @@ Optional:
 - `phone`
 - `company`
 - `serviceInterest`
+- `monthlyBudget`
 - `message`
 - `source`
+- `recaptchaToken`
 
 ---
 
@@ -917,12 +951,13 @@ Always handle errors like this:
 ```js
 try {
   const response = await api.get('/services');
-  return response.data;
-} catch (error) {
-  if (error.response?.status === 401) {
+  "name": "Muhammad Ali",
+  "email": "ali@example.com",
+  "phone": "03032799987",
     // logout user
-  }
-
+  "serviceInterest": "Meta Ads Management",
+  "monthlyBudget": "PKR 100,000–250,000",
+  "message": "We need qualified leads.",
   if (error.response?.status === 429) {
     // show rate limit warning
   }
@@ -978,18 +1013,18 @@ Recommended frontend behavior:
 ### Login flow
 
 ```js
-const login = async (email, password) => {
-  const res = await fetch('http://localhost:5000/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
+  "title": "Whizpool",
+  "slug": "whizpool",
+  "clientName": "Whizpool",
+  "industry": "Technology / Software",
+  "service": "Social Media Management / LinkedIn Content / Meta Ads",
+  "challenge": "Whizpool needed stronger social media content and visibility to unlock organic lead opportunities.",
+  "solution": "Developed LinkedIn-focused content and social media activity to improve visibility and engagement.",
+  "whatWeDid": "Developed LinkedIn-focused content and social media activity to improve visibility and engagement.",
+  "capabilities": ["Social Media Management", "LinkedIn Content", "Meta Ads"],
   const data = await res.json();
-
-  if (!res.ok) {
+    { "metric": "Known outcome", "description": "Whizpool started receiving organic leads through LinkedIn." }
     throw new Error(data.message || 'Login failed');
-  }
 
   localStorage.setItem('adminToken', data.token);
   return data;

@@ -2,7 +2,7 @@ const Testimonial = require('../models/Testimonial');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/pagination');
 
 const normalizeTestimonialPayload = (payload) => {
-  const { name, role, company, quote, rating, platform, isPublished } = payload;
+  const { name, role, company, quote, rating, platform, isDraft, isApproved, permissionGranted, reviewUrl, clientPhoto, clientLogo, isPublished } = payload;
 
   if (!name || !name.trim()) {
     throw new Error('Name is required');
@@ -25,6 +25,12 @@ const normalizeTestimonialPayload = (payload) => {
     quote: quote.trim(),
     rating: Number.isFinite(numericRating) ? Math.min(5, Math.max(1, numericRating)) : 5,
     platform: platform ? platform.trim() : 'Google',
+    isDraft: typeof isDraft === 'boolean' ? isDraft : true,
+    isApproved: typeof isApproved === 'boolean' ? isApproved : false,
+    permissionGranted: typeof permissionGranted === 'boolean' ? permissionGranted : false,
+    reviewUrl: reviewUrl ? reviewUrl.trim() : undefined,
+    clientPhoto: clientPhoto ? clientPhoto.trim() : undefined,
+    clientLogo: clientLogo ? clientLogo.trim() : undefined,
     isPublished: typeof isPublished === 'boolean' ? isPublished : true,
   };
 };
@@ -32,8 +38,14 @@ const normalizeTestimonialPayload = (payload) => {
 const getTestimonials = async (req, res) => {
   try {
     const { page, limit, skip, sort } = getPaginationParams(req.query);
-    const total = await Testimonial.countDocuments({ isPublished: true });
-    const testimonials = await Testimonial.find({ isPublished: true })
+    const publicFilter = {
+      isPublished: true,
+      isDraft: false,
+      isApproved: true,
+      permissionGranted: true,
+    };
+    const total = await Testimonial.countDocuments(publicFilter);
+    const testimonials = await Testimonial.find(publicFilter)
       .sort(sort)
       .skip(skip)
       .limit(limit);

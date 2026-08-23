@@ -34,6 +34,16 @@ const caseStudySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    whatWeDid: String,
+    capabilities: [{ type: String }],
+    relatedServices: [{ type: String }],
+    client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client' },
+    cta: String,
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    media: [{ type: String }],
     results: [
       {
         metric: String,

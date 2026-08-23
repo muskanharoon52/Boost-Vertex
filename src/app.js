@@ -47,14 +47,32 @@ const caseStudyRoutes = require('./routes/caseStudyRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const siteSettingsRoutes = require('./routes/siteSettingsRoutes');
+const clientRoutes = require('./routes/clientRoutes');
+const industryRoutes = require('./routes/industryRoutes');
+const siteContentRoutes = require('./routes/siteContentRoutes');
+const newsletterRoutes = require('./routes/newsletterRoutes');
+const blogCommentRoutes = require('./routes/blogCommentRoutes');
+const seoRoutes = require('./routes/seoRoutes');
+const legalRoutes = require('./routes/legalRoutes');
+const technicalSeoRoutes = require('./routes/technicalSeoRoutes');
+const mediaRoutes = require('./routes/mediaRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/blogs', blogRoutes);
+app.use('/api/blog-comments', blogCommentRoutes);
 app.use('/api/case-studies', caseStudyRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/site-settings', siteSettingsRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/industries', industryRoutes);
+app.use('/api/site-content', siteContentRoutes);
+app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/seo', seoRoutes);
+app.use('/api/legal', legalRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/', technicalSeoRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use((req, res) => {

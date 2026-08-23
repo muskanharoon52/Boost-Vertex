@@ -23,6 +23,8 @@ const adminSchema = new mongoose.Schema(
       type: String,
       default: 'admin',
     },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   { timestamps: true }
 );
@@ -37,6 +39,10 @@ adminSchema.pre('save', async function (next) {
 
 adminSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+adminSchema.methods.setPassword = async function (newPassword) {
+  this.password = newPassword;
 };
 
 module.exports = mongoose.model('Admin', adminSchema);

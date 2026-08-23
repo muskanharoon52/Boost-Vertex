@@ -4,18 +4,17 @@ const mongoose = require('mongoose');
 const request = require('supertest');
 
 const app = require('../src/app');
+const { getAdminCredentials, ensureTestAdmin } = require('./helpers/adminTestAuth');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/boost-vetex';
 
-const adminCredentials = {
-  email: 'admin@boostvertex.com',
-  password: 'admin123',
-};
+const adminCredentials = getAdminCredentials();
 
 let token = '';
 
 test.before(async () => {
   await mongoose.connect(MONGO_URI);
+  await ensureTestAdmin();
 });
 
 test.after(async () => {

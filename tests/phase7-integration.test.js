@@ -8,6 +8,7 @@ const path = require('path');
 const app = require('../src/app');
 const Lead = require('../src/models/Lead');
 const Service = require('../src/models/Service');
+const { loginAsAdmin } = require('./helpers/adminTestAuth');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/boost-vetex';
 
@@ -21,14 +22,8 @@ test.before(async () => {
   await Service.deleteMany({});
 
   // Get admin token
-  const loginResponse = await request(app)
-    .post('/api/auth/login')
-    .send({
-      email: 'admin@boostvertex.com',
-      password: 'admin123',
-    });
-
-  token = loginResponse.body.token;
+  const login = await loginAsAdmin(app, request);
+  token = login.token;
 });
 
 test.after(async () => {
@@ -124,6 +119,27 @@ test('Admin dashboard includes all required metrics', async () => {
   assert.ok(summary.leads.unread !== undefined);
   assert.ok(summary.leads.byStatus);
   assert.ok(Array.isArray(summary.leadSources));
+
+  // Verify mockup-facing dashboard panels
+  assert.ok(summary.industries);
+  assert.ok(summary.industries.published !== undefined);
+  assert.ok(summary.clients);
+  assert.ok(summary.clients.published !== undefined);
+  assert.ok(Array.isArray(summary.topServices));
+  assert.ok(summary.notifications);
+  assert.ok(summary.notifications.total !== undefined);
+  assert.ok(Array.isArray(response.body.recentContactMessages));
+  assert.ok(Array.isArray(response.body.recentContent));
+});
+
+test('Admin dashboard supports a lead activity period', async () => {
+  const response = await request(app)
+    .get('/api/admin/dashboard?period=30d')
+    .set('Authorization', `Bearer ${token}`)
+    .expect(200);
+
+  assert.equal(response.body.summary.period, '30d');
+  assert.ok(response.body.summary.leads);
 });
 
 test('Admin list endpoints support pagination', async () => {

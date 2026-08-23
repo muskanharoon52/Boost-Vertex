@@ -3,10 +3,25 @@ const Service = require('../models/Service');
 const Blog = require('../models/Blog');
 const CaseStudy = require('../models/CaseStudy');
 const Testimonial = require('../models/Testimonial');
+const Client = require('../models/Client');
+const Industry = require('../models/Industry');
+const BlogComment = require('../models/BlogComment');
 const { getAnalyticsSummary } = require('../middleware/apiLogger');
+
+const getPeriodStart = (period) => {
+  const now = new Date();
+  if (period === '7d') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (period === '30d') return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  if (period === 'quarter') return new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+  if (period === 'ytd') return new Date(now.getFullYear(), 0, 1);
+  return null;
+};
 
 const getDashboardSummary = async (req, res) => {
   try {
+    const period = req.query.period || 'all';
+    const periodStart = getPeriodStart(period);
+    const leadFilter = periodStart ? { createdAt: { $gte: periodStart } } : {};
     // Basic counts
     const [
       leadCount,
@@ -18,8 +33,10 @@ const getDashboardSummary = async (req, res) => {
       caseStudyUnpublishedCount,
       testimonialCount,
       testimonialUnpublishedCount,
+      clientCount,
+      industryCount,
     ] = await Promise.all([
-      Lead.countDocuments(),
+      Lead.countDocuments(leadFilter),
       Service.countDocuments({ isPublished: true }),
       Service.countDocuments({ isPublished: false }),
       Blog.countDocuments({ isPublished: true }),
@@ -28,10 +45,13 @@ const getDashboardSummary = async (req, res) => {
       CaseStudy.countDocuments({ isPublished: false }),
       Testimonial.countDocuments({ isPublished: true }),
       Testimonial.countDocuments({ isPublished: false }),
+      Client.countDocuments({ isPublished: true }),
+      Industry.countDocuments({ isPublished: true }),
     ]);
 
     // Lead status breakdown
     const leadsByStatus = await Lead.aggregate([
+      { $match: leadFilter },
       {
         $group: {
           _id: '$status',
@@ -41,12 +61,41 @@ const getDashboardSummary = async (req, res) => {
     ]);
 
     // Unread leads
-    const unreadLeadsCount = await Lead.countDocuments({ isRead: false });
+    const unreadLeadsCount = await Lead.countDocuments({ ...leadFilter, isRead: false });
 
     // Recent leads
-    const recentLeads = await Lead.find()
+    const recentLeads = await Lead.find(leadFilter)
       .sort({ createdAt: -1 })
       .limit(5);
+
+    const recentContactMessages = recentLeads;
+
+    const [recentServices, recentIndustries, recentCaseStudies, recentBlogs] = await Promise.all([
+      Service.find().select('title slug isPublished createdAt updatedAt').sort({ updatedAt: -1 }).limit(3).lean(),
+      Industry.find().select('name slug isPublished createdAt updatedAt').sort({ updatedAt: -1 }).limit(3).lean(),
+      CaseStudy.find().select('title slug isPublished createdAt updatedAt').sort({ updatedAt: -1 }).limit(3).lean(),
+      Blog.find().select('title slug isPublished createdAt updatedAt').sort({ updatedAt: -1 }).limit(3).lean(),
+    ]);
+
+    const recentContent = [
+      ...recentServices.map((item) => ({ ...item, type: 'service', title: item.title })),
+      ...recentIndustries.map((item) => ({ ...item, type: 'industry', title: item.name })),
+      ...recentCaseStudies.map((item) => ({ ...item, type: 'caseStudy', title: item.title })),
+      ...recentBlogs.map((item) => ({ ...item, type: 'blog', title: item.title })),
+    ].sort((first, second) => new Date(second.updatedAt || second.createdAt) - new Date(first.updatedAt || first.createdAt)).slice(0, 8);
+
+    const topServices = await Lead.aggregate([
+      { $match: { ...leadFilter, serviceInterest: { $exists: true, $nin: ['', null] } } },
+      { $group: { _id: '$serviceInterest', leads: { $sum: 1 } } },
+      { $sort: { leads: -1 } },
+      { $limit: 5 },
+      { $project: { _id: 0, service: '$_id', leads: 1 } },
+    ]);
+
+    const [pendingComments, draftTestimonials] = await Promise.all([
+      BlogComment.countDocuments({ status: 'pending' }),
+      Testimonial.countDocuments({ isPublished: true, isDraft: true }),
+    ]);
 
     // Top sources (where leads come from)
     const leadSources = await Lead.aggregate([
@@ -76,6 +125,7 @@ const getDashboardSummary = async (req, res) => {
     res.status(200).json({
       summary: {
         // Content counts
+        period,
         totalPublishedContent: serviceCount + blogCount + caseStudyCount,
         services: {
           published: serviceCount,
@@ -91,6 +141,14 @@ const getDashboardSummary = async (req, res) => {
           published: caseStudyCount,
           unpublished: caseStudyUnpublishedCount,
           total: caseStudyCount + caseStudyUnpublishedCount,
+        },
+        industries: {
+          published: industryCount,
+          total: industryCount,
+        },
+        clients: {
+          published: clientCount,
+          total: clientCount,
         },
         testimonials: {
           published: testimonialCount,
@@ -109,8 +167,18 @@ const getDashboardSummary = async (req, res) => {
           }, {}),
         },
         leadSources,
+        topServices,
+        notifications: {
+          unreadLeads: unreadLeadsCount,
+          pendingComments,
+          draftTestimonials,
+          total: unreadLeadsCount + pendingComments + draftTestimonials,
+        },
       },
       recentLeads,
+      recentContactMessages,
+      recentContent,
+      topServices,
     });
   } catch (error) {
     res.status(500).json({ message: error.message || 'Unable to fetch dashboard summary' });

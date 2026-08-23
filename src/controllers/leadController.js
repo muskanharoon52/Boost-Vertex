@@ -1,13 +1,91 @@
 const Lead = require('../models/Lead');
 const { sendEmail } = require('../config/mailer');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/pagination');
+const { verifyRecaptcha } = require('../services/recaptchaService');
+
+const buildLeadFilters = (query = {}) => {
+  const filters = {};
+
+  if (query.status) filters.status = query.status;
+  if (query.isRead !== undefined) filters.isRead = query.isRead === 'true';
+  if (query.source) filters.source = query.source;
+
+  if (query.dateFrom || query.dateTo) {
+    filters.createdAt = {};
+    if (query.dateFrom) filters.createdAt.$gte = new Date(query.dateFrom);
+    if (query.dateTo) filters.createdAt.$lte = new Date(query.dateTo);
+  }
+
+  if (query.q) {
+    filters.$or = [
+      { name: { $regex: query.q, $options: 'i' } },
+      { email: { $regex: query.q, $options: 'i' } },
+      { company: { $regex: query.q, $options: 'i' } },
+    ];
+  }
+
+  return filters;
+};
+
+const escapeCsv = (value) => {
+  const text = value === null || typeof value === 'undefined' ? '' : String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+};
+
+const leadCsvFields = [
+  'createdAt',
+  'name',
+  'email',
+  'phone',
+  'company',
+  'serviceInterest',
+  'monthlyBudget',
+  'message',
+  'source',
+  'status',
+  'isRead',
+];
 
 const createLead = async (req, res) => {
   try {
-    const { name, email, phone, company, serviceInterest, message, source, status, isRead } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      company,
+      serviceInterest,
+      monthlyBudget,
+      message,
+      source,
+      status,
+      isRead,
+      recaptchaToken,
+    } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({ message: 'Name and email are required' });
+    }
+
+    const hasRecaptchaSecret = Boolean(process.env.RECAPTCHA_SECRET_KEY);
+    const enforceRecaptcha = process.env.NODE_ENV === 'production' && hasRecaptchaSecret;
+
+    if (enforceRecaptcha && !recaptchaToken) {
+      return res.status(400).json({ message: 'reCAPTCHA token is required' });
+    }
+
+    if (recaptchaToken || enforceRecaptcha) {
+      const verification = await verifyRecaptcha(recaptchaToken, req.ip);
+
+      if (!verification.success) {
+        if (verification.reason === 'service_unavailable') {
+          return res.status(503).json({ message: 'reCAPTCHA verification service unavailable' });
+        }
+
+        return res.status(403).json({
+          message: 'reCAPTCHA verification failed',
+          errors: verification.errors || [],
+        });
+      }
     }
 
     const lead = await Lead.create({
@@ -16,6 +94,7 @@ const createLead = async (req, res) => {
       phone,
       company,
       serviceInterest,
+      monthlyBudget,
       message,
       source: source || 'website',
       status: status || 'new',
@@ -35,6 +114,7 @@ const createLead = async (req, res) => {
           <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
           <p><strong>Company:</strong> ${company || 'N/A'}</p>
           <p><strong>Service Interest:</strong> ${serviceInterest || 'N/A'}</p>
+          <p><strong>Monthly Budget:</strong> ${monthlyBudget || 'N/A'}</p>
           <p><strong>Message:</strong> ${message || 'No message provided'}</p>
         `,
         text: `New lead: ${name} (${email})`,
@@ -55,39 +135,7 @@ const createLead = async (req, res) => {
 const getLeads = async (req, res) => {
   try {
     const { page, limit, skip, sort } = getPaginationParams(req.query);
-    const { status, isRead, source, q, dateFrom, dateTo } = req.query;
-    const filters = {};
-
-    if (status) {
-      filters.status = status;
-    }
-
-    if (isRead !== undefined) {
-      filters.isRead = isRead === 'true';
-    }
-
-    if (source) {
-      filters.source = source;
-    }
-
-    // Date range filtering
-    if (dateFrom || dateTo) {
-      filters.createdAt = {};
-      if (dateFrom) {
-        filters.createdAt.$gte = new Date(dateFrom);
-      }
-      if (dateTo) {
-        filters.createdAt.$lte = new Date(dateTo);
-      }
-    }
-
-    if (q) {
-      filters.$or = [
-        { name: { $regex: q, $options: 'i' } },
-        { email: { $regex: q, $options: 'i' } },
-        { company: { $regex: q, $options: 'i' } },
-      ];
-    }
+    const filters = buildLeadFilters(req.query);
 
     const total = await Lead.countDocuments(filters);
     const leads = await Lead.find(filters)
@@ -100,6 +148,31 @@ const getLeads = async (req, res) => {
     res.status(200).json({ data: leads, pagination });
   } catch (error) {
     res.status(500).json({ message: error.message || 'Unable to fetch leads' });
+  }
+};
+
+const exportLeads = async (req, res) => {
+  try {
+    const filters = buildLeadFilters(req.query);
+    const leads = await Lead.find(filters)
+      .select(leadCsvFields.join(' '))
+      .sort(req.query.sort || '-createdAt')
+      .limit(10000)
+      .lean();
+
+    const header = leadCsvFields.join(',');
+    const rows = leads.map((lead) => leadCsvFields.map((field) => escapeCsv(lead[field])).join(','));
+    const csv = [header, ...rows].join('\r\n');
+    const filename = `boost-vertex-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Cache-Control': 'no-store',
+    });
+    res.status(200).send(csv);
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Unable to export leads' });
   }
 };
 
@@ -148,6 +221,7 @@ const updateLeadReadState = async (req, res) => {
 module.exports = {
   createLead,
   getLeads,
+  exportLeads,
   updateLeadStatus,
   updateLeadReadState,
 };

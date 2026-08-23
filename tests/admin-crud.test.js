@@ -8,6 +8,7 @@ const Service = require('../src/models/Service');
 const Blog = require('../src/models/Blog');
 const CaseStudy = require('../src/models/CaseStudy');
 const Testimonial = require('../src/models/Testimonial');
+const { loginAsAdmin } = require('./helpers/adminTestAuth');
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/boost-vetex';
 
@@ -23,14 +24,8 @@ test.before(async () => {
   await Testimonial.deleteMany({});
 
   // Get admin token
-  const loginResponse = await request(app)
-    .post('/api/auth/login')
-    .send({
-      email: 'admin@boostvertex.com',
-      password: 'admin123',
-    });
-
-  token = loginResponse.body.token;
+  const login = await loginAsAdmin(app, request);
+  token = login.token;
 });
 
 test.after(async () => {

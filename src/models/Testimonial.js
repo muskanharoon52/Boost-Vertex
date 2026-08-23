@@ -30,6 +30,21 @@ const testimonialSchema = new mongoose.Schema(
       type: String,
       default: 'Google',
     },
+    isDraft: {
+      type: Boolean,
+      default: true,
+    },
+    isApproved: {
+      type: Boolean,
+      default: false,
+    },
+    permissionGranted: {
+      type: Boolean,
+      default: false,
+    },
+    reviewUrl: String,
+    clientPhoto: String,
+    clientLogo: String,
     isPublished: {
       type: Boolean,
       default: true,
