@@ -10,8 +10,29 @@ const { adminRateLimiter, adminWriteRateLimiter } = require('./middleware/adminR
 
 const app = express();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Build the CORS allowlist from CLIENT_URL / CLIENT_URLS (comma-separated).
+const corsAllowlist = [process.env.CLIENT_URL, process.env.CLIENT_URLS]
+  .filter(Boolean)
+  .flatMap((value) => value.split(','))
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+const localhostOriginPattern = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+const isAllowedOrigin = (origin) => {
+  // Requests with no Origin header (curl, Postman, server-to-server, same-origin).
+  if (!origin) return true;
+  if (corsAllowlist.includes(origin)) return true;
+  // In local/dev, allow any localhost port so the frontend dev server
+  // (Vite :5173, Next :3000, etc.) is never blocked during integration.
+  if (!isProduction && localhostOriginPattern.test(origin)) return true;
+  return false;
+};
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || '*',
+  origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
   credentials: true,
 }));
 
@@ -26,9 +47,11 @@ app.use(apiLogger);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: Number(process.env.RATE_LIMIT_MAX) || (isProduction ? 200 : 2000),
   standardHeaders: true,
   legacyHeaders: false,
+  // Preflight requests are answered by CORS above; don't count them toward the limit.
+  skip: (req) => req.method === 'OPTIONS',
 });
 app.use('/api', limiter);
 

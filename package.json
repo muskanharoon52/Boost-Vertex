@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "test": "node --test --test-concurrency=1",
     "seed:admin": "node src/scripts/seedAdmin.js",
-    "seed:content": "node src/scripts/seedContent.js"
+    "seed:content": "node src/scripts/seedContent.js",
+    "seed:leads": "node src/scripts/seedLeads.js"
   },
   "keywords": [
     "boost-vertex",

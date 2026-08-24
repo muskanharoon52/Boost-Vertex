@@ -1,5 +1,25 @@
 const RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify';
 
+const TRUTHY = ['true', '1', 'yes', 'on'];
+const FALSY = ['false', '0', 'no', 'off'];
+
+/**
+ * Whether lead submissions must pass reCAPTCHA verification.
+ *
+ * - An explicit RECAPTCHA_ENABLED flag (true/false) always wins.
+ * - Otherwise, enforce only in production when a secret key is configured.
+ *
+ * This keeps reCAPTCHA fully disabled for local/dev API testing (so a token
+ * sent by the frontend widget is ignored rather than verified against Google),
+ * while preserving production enforcement.
+ */
+const isRecaptchaEnforced = () => {
+  const flag = String(process.env.RECAPTCHA_ENABLED || '').trim().toLowerCase();
+  if (TRUTHY.includes(flag)) return true;
+  if (FALSY.includes(flag)) return false;
+  return process.env.NODE_ENV === 'production' && Boolean(process.env.RECAPTCHA_SECRET_KEY);
+};
+
 const verifyRecaptcha = async (token, remoteIp) => {
   const secret = process.env.RECAPTCHA_SECRET_KEY;
 
@@ -54,4 +74,4 @@ const verifyRecaptcha = async (token, remoteIp) => {
   }
 };
 
-module.exports = { verifyRecaptcha };
+module.exports = { verifyRecaptcha, isRecaptchaEnforced };

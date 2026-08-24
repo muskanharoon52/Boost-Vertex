@@ -5,6 +5,7 @@ const Client = require('../models/Client');
 const Industry = require('../models/Industry');
 const Testimonial = require('../models/Testimonial');
 const CaseStudy = require('../models/CaseStudy');
+const Blog = require('../models/Blog');
 const SiteSettings = require('../models/SiteSettings');
 const SiteContent = require('../models/SiteContent');
 
@@ -113,18 +114,78 @@ const industries = [
 ].map((industry, sortOrder) => ({ ...industry, sortOrder, isPublished: true }));
 
 const testimonials = [
-  ['Hasnain Ahmed', 'Founder & CEO', 'MovePro Pakistan', 'Boost Vertex helped us generate high-quality and mature leads through Meta Ads. The leads were relevant to our business, and we were happy with the overall quality.'],
-  ['Dr. Waqas Ahmad', 'Lead Generation Client', 'Homoeopathic Centre Medicare', 'Boost Vertex helped us generate relevant leads for our business. They understood our requirements and delivered a good response through their lead-generation campaigns.'],
-  ['Muhammad Bilal', 'Client', 'Whizpool', 'Boost Vertex supported us with social media management and Meta Ads. Their work helped improve our online presence and created better opportunities through our digital channels.'],
-  ['AH Interior', 'Client', 'AH Interior', 'Boost Vertex helped us generate proper leads through Meta Ads for our business. We received relevant inquiries from potential customers and were satisfied with the response.'],
-  ['Mr. Ali', 'Founder', 'Software Company', 'Boost Vertex helped us generate mature and relevant leads through LinkedIn and Meta Ads. The campaigns were focused on reaching the right prospects for our business.'],
-].map(([name, role, company, quote], index) => ({ name, role, company, quote, isDraft: true, isApproved: false, permissionGranted: index < 2, isPublished: true }));
+  ['Hasnain Ahmed', 'Founder & CEO', 'MovePro Pakistan', 'Boost Vertex helped us generate high-quality and mature leads through Meta Ads. The leads were relevant to our business, and we were happy with the overall quality.', 5],
+  ['Dr. Waqas Ahmad', 'Lead Generation Client', 'Homoeopathic Centre Medicare', 'Boost Vertex helped us generate relevant leads for our business. They understood our requirements and delivered a good response through their lead-generation campaigns.', 5],
+  ['Muhammad Bilal', 'Client', 'Whizpool', 'Boost Vertex supported us with social media management and Meta Ads. Their work helped improve our online presence and created better opportunities through our digital channels.', 5],
+  ['AH Interior', 'Client', 'AH Interior', 'Boost Vertex helped us generate proper leads through Meta Ads for our business. We received relevant inquiries from potential customers and were satisfied with the response.', 4],
+  ['Mr. Ali', 'Founder', 'Software Company', 'Boost Vertex helped us generate mature and relevant leads through LinkedIn and Meta Ads. The campaigns were focused on reaching the right prospects for our business.', 5],
+].map(([name, role, company, quote, rating]) => ({
+  name,
+  role,
+  company,
+  quote,
+  rating,
+  platform: 'Google',
+  // Approved, permissioned and published so they surface on the public
+  // GET /api/testimonials endpoint (which filters isDraft:false, isApproved:true, permissionGranted:true).
+  isDraft: false,
+  isApproved: true,
+  permissionGranted: true,
+  isPublished: true,
+}));
 
 const caseStudies = [
   { title: 'MovePro Pakistan', slug: 'movepro-pakistan', clientName: 'MovePro Pakistan', industry: 'Transport & Logistics', service: 'Meta Ads + Lead Generation', challenge: 'MovePro Pakistan needed a reliable way to generate relevant prospects through paid advertising.', solution: 'Built and optimized a Meta Ads lead-generation strategy focused on relevant, business-ready prospects.', whatWeDid: 'Built and optimized a Meta Ads lead-generation strategy focused on relevant, business-ready prospects.', results: [{ metric: 'Known outcome', description: 'High-quality and mature leads were generated, and the client was satisfied with the prospect quality.' }], isPublished: true },
   { title: 'Dr. Waqas Ahmad', slug: 'dr-waqas-ahmad', clientName: 'Dr. Waqas Ahmad', industry: 'Healthcare', service: 'Lead Generation', challenge: 'The practice needed a consistent way to generate patient and client leads.', solution: 'Implemented a lead-generation strategy tailored to the practice audience.', whatWeDid: 'Implemented a lead-generation strategy tailored to the practice audience.', results: [{ metric: 'Known outcome', description: "Boost Vertex generated relevant leads for the client's business." }], isPublished: true },
   { title: 'Whizpool', slug: 'whizpool', clientName: 'Whizpool', industry: 'Technology / Software', service: 'Social Media Management / LinkedIn Content / Meta Ads', challenge: 'Whizpool needed stronger social media content and visibility to unlock organic lead opportunities.', solution: 'Developed LinkedIn-focused content and social media activity to improve visibility and engagement.', whatWeDid: 'Developed LinkedIn-focused content and social media activity to improve visibility and engagement.', capabilities: ['Social Media Management', 'LinkedIn Content', 'Meta Ads'], results: [{ metric: 'Known outcome', description: 'Whizpool started receiving organic leads through LinkedIn.' }], isPublished: true },
 ];
+
+const blogs = [
+  {
+    title: 'Why Meta Ads Are Still the Fastest Way to Generate Leads in 2025',
+    slug: 'meta-ads-fastest-way-to-generate-leads',
+    excerpt: 'Meta Ads remain one of the most cost-effective channels for businesses that need qualified leads quickly. Here is how Boost Vertex approaches Meta Ads for lead generation.',
+    content: 'Meta Ads (Facebook and Instagram) continue to deliver some of the best returns for businesses that need relevant leads, not just reach.\n\nAt Boost Vertex, we build Meta Ads campaigns around a clear ideal customer profile, tight audience targeting, and continuous creative testing. Instead of chasing impressions, we optimise for conversions and lead quality.\n\nKey elements of a lead-focused Meta Ads campaign:\n\n1. A defined ideal customer profile so targeting stays relevant.\n2. A structured campaign built around conversion objectives.\n3. Creative testing to find the angles and formats that resonate.\n4. Conversion tracking so every rupee of spend is accountable.\n5. Ongoing optimisation based on lead quality, not just cost per lead.\n\nThe result is a predictable flow of relevant prospects that your sales team can actually work with.',
+    category: 'Meta Ads',
+    tags: ['Meta Ads', 'Facebook Ads', 'Lead Generation', 'Performance Marketing'],
+    author: 'Boost Vertex',
+    seoTitle: 'Why Meta Ads Are Still the Fastest Way to Generate Leads',
+    seoDescription: 'How Boost Vertex uses Meta Ads for qualified lead generation in Pakistan, UAE and Saudi Arabia.',
+  },
+  {
+    title: 'Lead Quality vs Lead Volume: What Actually Matters',
+    slug: 'lead-quality-vs-lead-volume',
+    excerpt: 'More leads are not always better. This post explains why lead quality beats raw volume, and how to structure campaigns for commercially valuable prospects.',
+    content: 'It is easy to be impressed by a low cost per lead. But a cheap lead that never converts is expensive in the long run.\n\nBoost Vertex focuses on lead quality: prospects who match your ideal customer profile and have real commercial intent.\n\nHow we protect lead quality:\n\n- We qualify audiences before scaling spend.\n- We use lead forms and landing pages that filter out low-intent clicks.\n- We track leads through to real business outcomes, not just form fills.\n- We feed sales feedback back into targeting and creative.\n\nWhen you measure the right things, you stop paying for volume and start paying for growth.',
+    category: 'Lead Generation',
+    tags: ['Lead Generation', 'Lead Quality', 'Conversion'],
+    author: 'Boost Vertex',
+    seoTitle: 'Lead Quality vs Lead Volume: What Actually Matters',
+    seoDescription: 'Why qualified leads beat raw volume, and how Boost Vertex structures campaigns for commercially valuable prospects.',
+  },
+  {
+    title: 'Google Ads for High-Intent Customers: A Practical Guide',
+    slug: 'google-ads-for-high-intent-customers',
+    excerpt: 'Search advertising lets you reach customers at the exact moment they are looking for your product or service. Here is how to make Google Ads work for lead generation.',
+    content: 'Google Ads is powerful because it captures demand that already exists. Someone searching for your service is often much closer to buying than someone scrolling a feed.\n\nOur approach to Google Ads at Boost Vertex:\n\n1. Keyword research focused on high-intent, commercial search terms.\n2. Tightly themed campaigns and ad groups for relevance.\n3. Conversion-tracked ad copy aligned to the landing page.\n4. Landing pages built to convert, not just inform.\n5. Remarketing to stay in front of people who did not convert the first time.\n\nDone well, Google Ads becomes a reliable source of qualified enquiries alongside your Meta Ads.',
+    category: 'Google Ads',
+    tags: ['Google Ads', 'Search Advertising', 'PPC', 'Lead Generation'],
+    author: 'Boost Vertex',
+    seoTitle: 'Google Ads for High-Intent Customers: A Practical Guide',
+    seoDescription: 'A practical guide to using Google Ads for lead generation, from keyword research to conversion tracking.',
+  },
+  {
+    title: 'SEO That Supports Conversions, Not Just Rankings',
+    slug: 'seo-that-supports-conversions',
+    excerpt: 'Rankings are only useful if they bring in customers. This post covers how Boost Vertex approaches SEO with conversion and business growth in mind.',
+    content: 'Too many SEO campaigns chase rankings for their own sake. Boost Vertex treats SEO as a growth channel: organic visibility that supports conversions.\n\nOur SEO work covers:\n\n- Keyword research grounded in real commercial intent.\n- Technical SEO so search engines can crawl and index your site.\n- On-page optimisation for both relevance and readability.\n- A content strategy that answers real customer questions.\n- Internal linking and local SEO to strengthen authority and reach.\n\nThe goal is not just to rank, but to attract visitors who become leads and customers.',
+    category: 'SEO',
+    tags: ['SEO', 'Organic Growth', 'Content Strategy'],
+    author: 'Boost Vertex',
+    seoTitle: 'SEO That Supports Conversions, Not Just Rankings',
+    seoDescription: 'How Boost Vertex approaches SEO for conversions and business growth, not vanity rankings.',
+  },
+].map((blog) => ({ ...blog, isPublished: true }));
 
 const run = async () => {
   await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/boost-vetex');
@@ -133,6 +194,7 @@ const run = async () => {
   await Promise.all(industries.map((item) => Industry.findOneAndUpdate({ slug: item.slug }, item, { upsert: true, new: true, setDefaultsOnInsert: true })));
   await Promise.all(testimonials.map((item) => Testimonial.findOneAndUpdate({ name: item.name, company: item.company }, item, { upsert: true, new: true, setDefaultsOnInsert: true })));
   await Promise.all(caseStudies.map((item) => CaseStudy.findOneAndUpdate({ slug: item.slug }, item, { upsert: true, new: true, setDefaultsOnInsert: true })));
+  await Promise.all(blogs.map((item) => Blog.findOneAndUpdate({ slug: item.slug }, item, { upsert: true, new: true, setDefaultsOnInsert: true })));
   await SiteSettings.findOneAndUpdate({}, { companyName: 'Boost Vertex', email: 'boostvertex@gmail.com', salesEmail: 'boostvertex@gmail.com', phone: '03032799987', whatsapp: '03032799987', address: 'Blue Area, Islamabad, Pakistan', workingHours: 'Monday-Saturday, 10:00 AM-7:00 PM', preferredContactMethod: 'WhatsApp', secondaryContactMethod: 'Phone Call', bookingUrl: null, socialLinks: { facebook: 'https://www.facebook.com/adswithboostvertex', instagram: 'https://www.instagram.com/boostvertex', linkedin: 'https://www.linkedin.com/company/boost-vertex-pk/' } }, { upsert: true, new: true, setDefaultsOnInsert: true });
   await SiteContent.findOneAndUpdate({ type: 'about' }, { type: 'about', content: { founderName: 'Tayyab Riaz', founderTitle: 'Founder, Boost Vertex', founderStory: 'Boost Vertex was founded by Tayyab Riaz with a simple goal: to help businesses turn digital marketing into real business opportunities.\n\nStarting with a strong focus on Meta Ads and Lead Generation, Boost Vertex helps businesses reach the right audiences and generate relevant leads. The agency has since expanded its capabilities to include Google Ads, YouTube Ads, SEO, and Web Development.\n\nToday, Boost Vertex works with businesses across Pakistan, the UAE, and Saudi Arabia, with a focus on lead quality, practical execution, and measurable performance.\n\nOur belief is simple: digital marketing should contribute to business growth—not just generate clicks and impressions.' } }, { upsert: true, new: true });
     await SiteContent.findOneAndUpdate({ type: 'about' }, { type: 'about', content: { founderName: 'Tayyab Riaz', founderTitle: 'Founder, Boost Vertex', founderStory: 'Boost Vertex was founded by Tayyab Riaz with a simple goal: to help businesses turn digital marketing into real business opportunities.\n\nStarting with a strong focus on Meta Ads and Lead Generation, Boost Vertex helps businesses reach the right audiences and generate relevant leads. The agency has since expanded its capabilities to include Google Ads, YouTube Ads, SEO, and Web Development.\n\nToday, Boost Vertex works with businesses across Pakistan, the UAE, and Saudi Arabia, with a focus on lead quality, practical execution, and measurable performance.\n\nOur belief is simple: digital marketing should contribute to business growth—not just generate clicks and impressions.', isPublished: true } }, { upsert: true, new: true });

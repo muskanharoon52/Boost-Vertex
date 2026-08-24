@@ -11,16 +11,27 @@ const seedAdmin = async () => {
 
     const email = process.env.ADMIN_EMAIL || 'admin@boostvertex.com';
     const password = process.env.ADMIN_PASSWORD || 'admin123';
+    const name = process.env.ADMIN_NAME || 'Boost Vertex Admin';
 
     const existingAdmin = await Admin.findOne({ email });
 
     if (existingAdmin) {
-      console.log('Admin already exists:', email);
+      // Idempotently reset name/role/password to the documented .env values so the
+      // credentials always work for login + dashboard. Assigning `password` marks it
+      // modified, so the model's pre('save') hook re-hashes it (findOneAndUpdate would
+      // skip the hook and store a plaintext password that could never match on login).
+      existingAdmin.name = name;
+      existingAdmin.role = 'admin';
+      existingAdmin.password = password;
+      await existingAdmin.save();
+
+      console.log('Admin credentials reset successfully');
+      console.log({ id: existingAdmin._id, email: existingAdmin.email, password });
       process.exit(0);
     }
 
     const admin = await Admin.create({
-      name: 'Boost Vertex Admin',
+      name,
       email,
       password,
       role: 'admin',

@@ -1,7 +1,7 @@
 const Lead = require('../models/Lead');
 const { sendEmail } = require('../config/mailer');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/pagination');
-const { verifyRecaptcha } = require('../services/recaptchaService');
+const { verifyRecaptcha, isRecaptchaEnforced } = require('../services/recaptchaService');
 
 const buildLeadFilters = (query = {}) => {
   const filters = {};
@@ -66,14 +66,13 @@ const createLead = async (req, res) => {
       return res.status(400).json({ message: 'Name and email are required' });
     }
 
-    const hasRecaptchaSecret = Boolean(process.env.RECAPTCHA_SECRET_KEY);
-    const enforceRecaptcha = process.env.NODE_ENV === 'production' && hasRecaptchaSecret;
+    const enforceRecaptcha = isRecaptchaEnforced();
 
     if (enforceRecaptcha && !recaptchaToken) {
       return res.status(400).json({ message: 'reCAPTCHA token is required' });
     }
 
-    if (recaptchaToken || enforceRecaptcha) {
+    if (enforceRecaptcha) {
       const verification = await verifyRecaptcha(recaptchaToken, req.ip);
 
       if (!verification.success) {

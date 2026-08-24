@@ -14,6 +14,7 @@ const originalEnv = {
   NODE_ENV: process.env.NODE_ENV,
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
   RECAPTCHA_MIN_SCORE: process.env.RECAPTCHA_MIN_SCORE,
+  RECAPTCHA_ENABLED: process.env.RECAPTCHA_ENABLED,
   SMTP_USER: process.env.SMTP_USER,
 };
 
@@ -25,12 +26,16 @@ test.before(async () => {
   // Avoid external SMTP calls during this test suite.
   process.env.SMTP_USER = 'your_email@gmail.com';
   process.env.RECAPTCHA_MIN_SCORE = '0.5';
+  // These cases exercise the enforced path; opt in explicitly so a local
+  // `.env` with RECAPTCHA_ENABLED=false does not mask them.
+  process.env.RECAPTCHA_ENABLED = 'true';
 });
 
 test.after(async () => {
   process.env.NODE_ENV = originalEnv.NODE_ENV;
   process.env.RECAPTCHA_SECRET_KEY = originalEnv.RECAPTCHA_SECRET_KEY;
   process.env.RECAPTCHA_MIN_SCORE = originalEnv.RECAPTCHA_MIN_SCORE;
+  process.env.RECAPTCHA_ENABLED = originalEnv.RECAPTCHA_ENABLED;
   process.env.SMTP_USER = originalEnv.SMTP_USER;
   global.fetch = originalFetch;
 
