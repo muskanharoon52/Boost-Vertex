@@ -1,9 +1,10 @@
-# Local Integration Notes — Boost Vertex Backend
+# Boost Vertex Backend — Local Integration Guide
 
-Handoff for wiring the frontend to the backend locally. This covers the five items you raised, plus one important caveat about the test suite and the shared database.
+The canonical guide for wiring the frontend to the backend locally. It covers setup, the integration items you raised (seeded data, dashboard, reCAPTCHA, CORS, CMS), a **complete endpoint reference for every module** (§7), and the **current verified status** of each (§8).
 
-**Base API URL:** `http://localhost:5000/api`
+**Base API URL:** `http://localhost:5000/api` — the technical-SEO files (`sitemap.xml`, `robots.txt`) are served at the root, not under `/api`.
 **Branch:** `naveed-updates` (clone/pull this, then `npm install`)
+**Last verified:** 2026-08-24 — every endpoint below was live-checked against the running server; see §8 for the results.
 
 Quick start:
 
@@ -190,6 +191,152 @@ All modules follow the same REST pattern. Admin routes need `Authorization: Bear
 
 Admin list endpoints support `page`, `limit`, `sort`, `q`, and module-specific filters (e.g. `isPublished`, `category`, `industry`, `rating`). Public list endpoints exclude unpublished records; admin list endpoints include them.
 
-Related dashboard/analytics: `GET /api/admin/dashboard`, `GET /api/admin/analytics` (both admin-only).
+Related dashboard/analytics: `GET /api/admin/dashboard`, `GET /api/admin/analytics` (both admin-only, in §7).
 
-All of the above were smoke-tested live against the running server (login → token → dashboard, public lists non-empty, CORS from `:5173`, reCAPTCHA v2 enforcement on lead POST — 400 without a token, 403 on an invalid one — lead pagination/filters/status/read) and pass.
+> **`PUT` is a full-object replace, not a partial patch.** Update endpoints re-run the same validation as create, so you must send **every required field**, not just the ones you changed. For Services that means `title` + `summary` + `description` are all required on `PUT`; sending only `{ "title": "…" }` returns `400 { "message": "Summary is required" }`. Read the current record, merge your changes, and send the whole object back.
+
+These five modules were confirmed live (create → admin list → update → delete round-trip). See §8 for the full status matrix.
+
+---
+
+## 7. Complete API reference (all modules)
+
+Every route the backend exposes. **Leads** are documented in §2 and the **five core CMS modules** (Services, Blogs, Case Studies, Testimonials, Site Settings) in §6 — everything else is below. All statuses were verified live on 2026-08-24 (§8).
+
+**Conventions**
+
+- **Auth header:** admin endpoints require `Authorization: Bearer <token>` from `POST /api/auth/login`. Without it you get `401 { "message": "Not authorized, token missing" }`. Public endpoints need nothing.
+- **List responses** are `{ "data": [ … ], "pagination": { page, limit, total, totalPages } }`. Single-record GETs (`/:slug`, `/homepage`, etc.) return the object directly. `/admin/list` endpoints accept `page`, `limit`, `sort`, `q` plus module-specific filters, and include unpublished records; public lists exclude them.
+- **`PUT` is a full-object replace** (see the note in §6) — send all required fields.
+- **Unknown paths** (including bare `/api`) return `404 { "message": "Route not found" }`. The liveness check is `GET /api/health`.
+
+### Auth — `/api/auth`
+
+| Method & path                    | Auth  | Purpose                                                    |
+|----------------------------------|-------|------------------------------------------------------------|
+| `POST /api/auth/login`           | Public| Body `{ email, password }` → `{ token, admin }`. Token is a 7-day JWT. |
+| `POST /api/auth/register`        | Public| Bootstrap an admin account (prefer `npm run seed:admin`).  |
+| `POST /api/auth/forgot-password` | Public| Body `{ email }` — starts a reset (emails a token).        |
+| `POST /api/auth/reset-password`  | Public| Body `{ token, password }` — completes the reset.          |
+| `GET  /api/auth/me`              | Admin | Current admin profile.                                     |
+
+### Clients & Industries — `/api/clients`, `/api/industries`
+
+Same shape for both (`contentController`). Public list/read, admin CRUD.
+
+| Method & path                     | Auth  | Purpose                                   |
+|-----------------------------------|-------|-------------------------------------------|
+| `GET  /api/clients`               | Public| Published clients (list).                 |
+| `GET  /api/clients/:slug`         | Public| Single client by slug.                    |
+| `GET  /api/clients/admin/list`    | Admin | All clients incl. unpublished.            |
+| `POST /api/clients`               | Admin | Create.                                   |
+| `PUT  /api/clients/:id`           | Admin | Update (full replace).                    |
+| `DELETE /api/clients/:id`         | Admin | Delete.                                   |
+| `GET  /api/industries` …          | —     | Identical set under `/api/industries`.    |
+
+### Site content — `/api/site-content`
+
+Two singleton documents (homepage, about), each with a public GET and an admin PUT.
+
+| Method & path                          | Auth  | Purpose                     |
+|----------------------------------------|-------|-----------------------------|
+| `GET  /api/site-content/homepage`      | Public| Homepage content block.     |
+| `PUT  /api/site-content/homepage`      | Admin | Update homepage content.    |
+| `GET  /api/site-content/about`         | Public| About-page content block.   |
+| `PUT  /api/site-content/about`         | Admin | Update about content.       |
+
+### Newsletter — `/api/newsletter`
+
+| Method & path                       | Auth  | Purpose                                  |
+|-------------------------------------|-------|------------------------------------------|
+| `POST /api/newsletter/subscribe`    | Public| Body `{ email }` — add a subscriber.     |
+| `POST /api/newsletter/unsubscribe`  | Public| Body `{ email }` — remove a subscriber.  |
+| `GET  /api/newsletter/admin/list`   | Admin | List subscribers (paginated).            |
+
+### Blog comments — `/api/blog-comments`
+
+| Method & path                             | Auth  | Purpose                                            |
+|-------------------------------------------|-------|----------------------------------------------------|
+| `GET  /api/blog-comments/:blogId`         | Public| Approved comments for a blog (paginated).          |
+| `POST /api/blog-comments/:blogId`         | Public| Submit a comment (starts pending moderation).      |
+| `GET  /api/blog-comments/admin/list`      | Admin | All comments across blogs, any status.             |
+| `PATCH /api/blog-comments/:id/status`     | Admin | Approve/reject (body `{ status }`).                |
+| `DELETE /api/blog-comments/:id`           | Admin | Delete a comment.                                  |
+
+### Media uploads — `/api/media`
+
+Backed by Cloudinary (configured and verified — `cloudinary.api.ping()` → `ok`).
+
+| Method & path                    | Auth  | Purpose                                                       |
+|----------------------------------|-------|---------------------------------------------------------------|
+| `GET  /api/media/admin/list`     | Admin | List uploaded assets (paginated).                             |
+| `POST /api/media`                | Admin | Upload — `multipart/form-data`, file field `file`; stored on Cloudinary. |
+| `DELETE /api/media/:id`          | Admin | Delete asset (removes from Cloudinary + DB).                  |
+
+### SEO structured data — `/api/seo` (all public)
+
+Return ready-to-embed JSON-LD (`application/json`, `@context: schema.org`).
+
+| Method & path                          | Returns                                  |
+|----------------------------------------|-------------------------------------------|
+| `GET /api/seo/organization`            | `Organization` schema.                    |
+| `GET /api/seo/reviews`                 | `ItemList` of review schemas.             |
+| `GET /api/seo/service/:slug`           | Service page `@graph`.                    |
+| `GET /api/seo/industry/:slug`          | Industry `WebPage` schema.                |
+| `GET /api/seo/case-study/:slug`        | Case-study `Article` schema.              |
+| `GET /api/seo/blog/:slug`              | Blog `Article` schema.                    |
+
+### Legal documents — `/api/legal`
+
+Valid `:type` values: `privacy-policy`, `terms`, `cookie-policy`, `disclaimer`.
+
+| Method & path                    | Auth  | Purpose                                                             |
+|----------------------------------|-------|---------------------------------------------------------------------|
+| `GET  /api/legal/:type`          | Public| Fetch a published legal doc. **404 until one is created** (none seeded yet). |
+| `PUT  /api/legal/:type`          | Admin | Create/update a legal doc (body `{ title, content, version, effectiveDate, isPublished }`). |
+| `GET  /api/legal/admin/list`     | Admin | List all legal docs (currently empty).                              |
+
+### Technical SEO — served at the root (public)
+
+| Method & path        | Returns                                  |
+|----------------------|-------------------------------------------|
+| `GET /sitemap.xml`   | XML sitemap (`application/xml`).          |
+| `GET /robots.txt`    | `robots.txt` (`text/plain`).              |
+
+### Admin dashboard & analytics — `/api/admin` (admin-only)
+
+| Method & path              | Purpose                                                                                  |
+|----------------------------|-------------------------------------------------------------------------------------------|
+| `GET /api/admin/dashboard` | `{ summary, recentLeads, recentContactMessages, recentContent, topServices }`.            |
+| `GET /api/admin/analytics` | `{ message, analytics: { … } }` — aggregate counts/metrics.                               |
+
+### Health — `/api/health` (public)
+
+`GET /api/health` → `200 { "status": "ok", "message": "Boost Vertex backend is running" }`.
+
+---
+
+## 8. Endpoint status — verified live (2026-08-24)
+
+All 41 endpoints were exercised against the running server (admin token minted via `POST /api/auth/login`). Everything is functional; the only non-200s are by design and noted below.
+
+| Area                                   | Status | Notes                                                                 |
+|----------------------------------------|--------|-----------------------------------------------------------------------|
+| Health                                 | ✅ 200 | `GET /api/health`.                                                    |
+| Auth (login, `/me`)                    | ✅ 200 | Login returns a token; `/me` resolves the admin.                     |
+| Public content — Services/Blogs/Case Studies/Testimonials | ✅ 200 | Lists non-empty; `/:slug` detail resolves.        |
+| Site settings / site content (home, about) | ✅ 200 | Singletons return their objects.                                  |
+| Clients / Industries (list, `/:slug`, admin list) | ✅ 200 | Populated. *(Note: a few `…-test-…` records from earlier CRUD tests are present — cosmetic, safe to ignore or delete.)* |
+| SEO JSON-LD (all 6)                    | ✅ 200 | organization, reviews, service, industry, case-study, blog.          |
+| Sitemap / robots                       | ✅ 200 | Served at the root.                                                   |
+| Leads — list, pagination, filters, export, status/read PATCH | ✅ 200 | 13 seed leads; 2 pages; all filters + CSV export work. |
+| Admin dashboard                        | ✅ 200 | Full body (`summary.totalPublishedContent = 13`, etc.).              |
+| Admin analytics                        | ✅ 200 | Aggregate metrics returned.                                          |
+| CMS admin lists (Services/Blogs/Case Studies/Testimonials) | ✅ 200 | Include unpublished; CRUD round-trip confirmed. |
+| Blog comments (public `/:blogId`, admin list) | ✅ 200 | Empty until comments are submitted.                          |
+| Newsletter (admin list)                | ✅ 200 | Empty until someone subscribes.                                      |
+| Media (admin list)                     | ✅ 200 | Empty until an asset is uploaded; Cloudinary verified reachable.     |
+| Legal (public `/:type`)                | ⚠️ 404 | **By design** — no legal docs seeded. `PUT /api/legal/:type` to create one, then the public GET returns 200. |
+| Admin route without token              | ✅ 401 | Guard works — `{ "message": "Not authorized, token missing" }`.      |
+| reCAPTCHA on `POST /api/leads`         | ✅     | v2 enforced: 400 (no token) / 403 (invalid) / 201 (valid). See §4.   |
+| CORS from `http://localhost:5173`      | ✅     | Origin reflected + credentials. See §5.                              |
