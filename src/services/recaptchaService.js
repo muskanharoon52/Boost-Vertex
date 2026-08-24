@@ -20,6 +20,23 @@ const isRecaptchaEnforced = () => {
   return process.env.NODE_ENV === 'production' && Boolean(process.env.RECAPTCHA_SECRET_KEY);
 };
 
+// Optional server-side hostname allowlist. reCAPTCHA v2 site keys are already
+// restricted to specific domains in the Google admin console, so this is
+// defense-in-depth and stays OFF unless RECAPTCHA_ALLOWED_HOSTNAMES is set
+// (comma-separated), which keeps local testing on localhost frictionless.
+const getAllowedHostnames = () =>
+  String(process.env.RECAPTCHA_ALLOWED_HOSTNAMES || '')
+    .split(',')
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+
+/**
+ * Verify a reCAPTCHA v2 Checkbox ("I'm not a robot") token with Google.
+ *
+ * The v2 siteverify response is { success, challenge_ts, hostname, error-codes }.
+ * v2 does NOT return a score (that is a v3 concept), so success is decided
+ * purely by `success === true` plus the optional hostname allowlist.
+ */
 const verifyRecaptcha = async (token, remoteIp) => {
   const secret = process.env.RECAPTCHA_SECRET_KEY;
 
@@ -54,16 +71,31 @@ const verifyRecaptcha = async (token, remoteIp) => {
     }
 
     const data = await response.json();
-    const minimumScore = Number(process.env.RECAPTCHA_MIN_SCORE || 0.5);
-    const score = typeof data.score === 'number' ? data.score : null;
-    const scorePass = score === null ? true : score >= minimumScore;
+    const hostname = data.hostname || null;
+    const challengeTs = data.challenge_ts || null;
 
-    return {
-      success: data.success === true && scorePass,
-      score,
-      errors: data['error-codes'] || [],
-      reason: data.success === true && scorePass ? null : 'verification_failed',
-    };
+    if (data.success !== true) {
+      return {
+        success: false,
+        reason: 'verification_failed',
+        errors: data['error-codes'] || [],
+        hostname,
+        challengeTs,
+      };
+    }
+
+    const allowedHostnames = getAllowedHostnames();
+    if (allowedHostnames.length && hostname && !allowedHostnames.includes(hostname.toLowerCase())) {
+      return {
+        success: false,
+        reason: 'hostname_mismatch',
+        errors: ['hostname-not-allowed'],
+        hostname,
+        challengeTs,
+      };
+    }
+
+    return { success: true, hostname, challengeTs, errors: [], reason: null };
   } catch (error) {
     return {
       success: false,

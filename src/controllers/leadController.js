@@ -66,14 +66,18 @@ const createLead = async (req, res) => {
       return res.status(400).json({ message: 'Name and email are required' });
     }
 
+    // The v2 Checkbox widget posts the token as `g-recaptcha-response`; also
+    // accept an explicit `recaptchaToken` for clients that rename it.
+    const recaptchaResponse = recaptchaToken || req.body['g-recaptcha-response'];
+
     const enforceRecaptcha = isRecaptchaEnforced();
 
-    if (enforceRecaptcha && !recaptchaToken) {
+    if (enforceRecaptcha && !recaptchaResponse) {
       return res.status(400).json({ message: 'reCAPTCHA token is required' });
     }
 
     if (enforceRecaptcha) {
-      const verification = await verifyRecaptcha(recaptchaToken, req.ip);
+      const verification = await verifyRecaptcha(recaptchaResponse, req.ip);
 
       if (!verification.success) {
         if (verification.reason === 'service_unavailable') {

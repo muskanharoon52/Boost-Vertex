@@ -98,20 +98,66 @@ curl -s http://localhost:5000/api/admin/dashboard \
 
 ---
 
-## 4. reCAPTCHA — disabled for local testing
+## 4. reCAPTCHA — v2 Checkbox, enabled for local testing
 
-reCAPTCHA is **OFF** locally, so `POST /api/leads` succeeds whether or not a token is sent. Confirmed: posting a lead **with** a dummy `recaptchaToken` returns `201` locally (the token is ignored, not verified against Google).
+The site key is registered as **reCAPTCHA v2 Checkbox** ("I'm not a robot"). Backend verification is now **ON** locally (`RECAPTCHA_ENABLED=true`), so `POST /api/leads` requires a valid v2 token. The frontend must mount the widget and send its token with the contact form.
 
-- Controlled by `RECAPTCHA_ENABLED` in `.env`, currently `false`.
-- **Frontend site key** (for when you enable it — safe to embed in the frontend): `6LeZRJQtAAAAAAP-FPqKVcMg6OiAX7sa7UT_3cJOM`
-- The **secret key stays server-side only** and is never needed by the frontend.
+**Keys:**
+- **Site key** (public — embed in the frontend): `6LeZRJQtAAAAAAP-FPqKVcMg6OiAX7sa7UT_3cJOM`
+- The **secret key stays server-side only** — never put it in frontend code.
 
-Enforcement logic (in `src/services/recaptchaService.js` → `isRecaptchaEnforced()`):
-- `RECAPTCHA_ENABLED=true` → always enforce.
-- `RECAPTCHA_ENABLED=false` → never enforce (current local setting).
+**Allowed domains** (set on the key in the Google admin console): `www.boostvertex.online`, plus `localhost` for local testing. reCAPTCHA matches on hostname only, so `localhost` covers any port — `http://localhost:3000`, `:5173`, etc. all work.
+
+### Frontend widget
+
+Add the script once (e.g. in `index.html`):
+
+```html
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+```
+
+Render the checkbox inside the contact form:
+
+```html
+<div class="g-recaptcha" data-sitekey="6LeZRJQtAAAAAAP-FPqKVcMg6OiAX7sa7UT_3cJOM"></div>
+```
+
+On submit, read the token and send it with the lead. The token is available as `grecaptcha.getResponse()` (or from the hidden `g-recaptcha-response` field the widget injects):
+
+```js
+const token = grecaptcha.getResponse();          // '' if the user hasn't checked the box
+if (!token) { /* block submit, show "please verify" */ }
+
+await fetch('http://localhost:5000/api/leads', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    name, email, phone, company, serviceInterest, monthlyBudget, message,
+    'g-recaptcha-response': token,   // or: recaptchaToken: token
+  }),
+});
+
+grecaptcha.reset();   // tokens are single-use — reset the widget after every submit
+```
+
+The backend accepts the token under **either** field name: `g-recaptcha-response` (the widget's native name) or `recaptchaToken`.
+
+### Backend behavior (`POST /api/leads`)
+
+| Case | Response |
+|------|----------|
+| No token sent | `400 { message: "reCAPTCHA token is required" }` |
+| Token fails Google verification | `403 { message: "reCAPTCHA verification failed", errors: [...] }` |
+| Google siteverify unreachable | `503 { message: "reCAPTCHA verification service unavailable" }` |
+| Valid token | `201` — lead created |
+
+No lead is created unless verification passes. A v2 token is **single-use** and expires after ~2 minutes, so always `grecaptcha.reset()` after a submit and get a fresh token for the next one.
+
+### Toggle & options (`.env`)
+
+- `RECAPTCHA_ENABLED=true` → enforce (current setting). Set to `false` to bypass entirely for pure API testing without the widget.
 - Unset → enforce only when `NODE_ENV=production` **and** a secret key is configured.
-
-To exercise verification locally, set `RECAPTCHA_ENABLED=true` and provide a valid token from the widget; otherwise leave it `false`.
+- Optional `RECAPTCHA_ALLOWED_HOSTNAMES=localhost,www.boostvertex.online` (comma-separated) adds a server-side hostname check on top of Google's verification. Leave it unset for local testing — the domain restriction on the key already covers this.
 
 ---
 
@@ -146,4 +192,4 @@ Admin list endpoints support `page`, `limit`, `sort`, `q`, and module-specific f
 
 Related dashboard/analytics: `GET /api/admin/dashboard`, `GET /api/admin/analytics` (both admin-only).
 
-All of the above were smoke-tested live against the running server (login → token → dashboard, public lists non-empty, CORS from `:5173`, reCAPTCHA-off lead POST, lead pagination/filters/status/read) and pass.
+All of the above were smoke-tested live against the running server (login → token → dashboard, public lists non-empty, CORS from `:5173`, reCAPTCHA v2 enforcement on lead POST — 400 without a token, 403 on an invalid one — lead pagination/filters/status/read) and pass.
