@@ -1,19 +1,45 @@
 const Client = require('../models/Client');
 const Industry = require('../models/Industry');
 const SiteContent = require('../models/SiteContent');
+const { getPaginationParams, buildPaginationMeta } = require('../utils/pagination');
+const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 const slugify = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
 const listPublished = (Model) => async (req, res) => {
   try {
     const data = await Model.find({ isPublished: true }).sort({ sortOrder: 1, createdAt: -1 });
-    res.status(200).json({ data });
-  } catch (error) { res.status(500).json({ message: error.message || 'Unable to fetch content' }); }
+    return sendSuccess(res, { message: `${Model.modelName} fetched successfully`, data });
+  } catch (error) { return sendError(res, { status: 500, message: error.message || 'Unable to fetch content' }); }
 };
 const listAdmin = (Model) => async (req, res) => {
   try {
-    const data = await Model.find({}).sort({ sortOrder: 1, createdAt: -1 });
-    res.status(200).json({ data });
-  } catch (error) { res.status(500).json({ message: error.message || 'Unable to fetch content' }); }
+    const { page, limit, skip, sort } = getPaginationParams(req.query);
+    const filter = {};
+
+    if (req.query.isPublished !== undefined) {
+      filter.isPublished = req.query.isPublished === 'true';
+    }
+
+    if (req.query.q) {
+      filter.$or = [
+        { name: { $regex: req.query.q, $options: 'i' } },
+        { slug: { $regex: req.query.q, $options: 'i' } },
+        { description: { $regex: req.query.q, $options: 'i' } },
+      ];
+    }
+
+    if (req.query.sort) {
+      // Preserve the explicit sort option when provided by the client.
+    }
+
+    const total = await Model.countDocuments(filter);
+    const data = await Model.find(filter).sort(sort).skip(skip).limit(limit);
+    return sendSuccess(res, {
+      message: `${Model.modelName} fetched successfully`,
+      data,
+      extra: { pagination: buildPaginationMeta(page, limit, total) },
+    });
+  } catch (error) { return sendError(res, { status: 500, message: error.message || 'Unable to fetch content' }); }
 };
 const createRecord = (Model, label) => async (req, res) => {
   try {

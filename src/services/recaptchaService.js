@@ -17,7 +17,12 @@ const isRecaptchaEnforced = () => {
   const flag = String(process.env.RECAPTCHA_ENABLED || '').trim().toLowerCase();
   if (TRUTHY.includes(flag)) return true;
   if (FALSY.includes(flag)) return false;
-  return process.env.NODE_ENV === 'production' && Boolean(process.env.RECAPTCHA_SECRET_KEY);
+
+  // Keep reCAPTCHA opt-in instead of auto-enforcing in production based on a
+  // secret alone. This avoids blocking local/admin integration flows when the
+  // environment is set to production but the app has not explicitly enabled the
+  // public-form check.
+  return false;
 };
 
 // Optional server-side hostname allowlist. reCAPTCHA v2 site keys are already

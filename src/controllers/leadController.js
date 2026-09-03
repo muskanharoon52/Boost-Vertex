@@ -1,7 +1,9 @@
 const Lead = require('../models/Lead');
+const Admin = require('../models/Admin');
 const { sendEmail } = require('../config/mailer');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/pagination');
 const { verifyRecaptcha, isRecaptchaEnforced } = require('../services/recaptchaService');
+const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 const buildLeadFilters = (query = {}) => {
   const filters = {};
@@ -9,6 +11,7 @@ const buildLeadFilters = (query = {}) => {
   if (query.status) filters.status = query.status;
   if (query.isRead !== undefined) filters.isRead = query.isRead === 'true';
   if (query.source) filters.source = query.source;
+  if (query.serviceInterest) filters.serviceInterest = query.serviceInterest;
 
   if (query.dateFrom || query.dateTo) {
     filters.createdAt = {};
@@ -21,10 +24,31 @@ const buildLeadFilters = (query = {}) => {
       { name: { $regex: query.q, $options: 'i' } },
       { email: { $regex: query.q, $options: 'i' } },
       { company: { $regex: query.q, $options: 'i' } },
+      { subject: { $regex: query.q, $options: 'i' } },
+      { message: { $regex: query.q, $options: 'i' } },
     ];
   }
 
   return filters;
+};
+
+// Transparent lead-quality heuristic, capped 0-100. Admins can override the
+// stored score via PATCH /api/leads/:id.
+const budgetScoreWeights = {
+  'Under PKR 50,000': 5,
+  'PKR 50,000–100,000': 10,
+  'PKR 100,000–250,000': 20,
+  'PKR 250,000–500,000': 30,
+  'PKR 500,000+': 40,
+};
+
+const computeLeadScore = ({ monthlyBudget, phone, company, serviceInterest, message } = {}) => {
+  let score = budgetScoreWeights[monthlyBudget] || 0;
+  if (phone && String(phone).trim()) score += 20;
+  if (company && String(company).trim()) score += 15;
+  if (serviceInterest && String(serviceInterest).trim()) score += 10;
+  if (message && String(message).trim().length >= 50) score += 15;
+  return Math.max(0, Math.min(100, score));
 };
 
 const escapeCsv = (value) => {
@@ -40,11 +64,16 @@ const leadCsvFields = [
   'company',
   'serviceInterest',
   'monthlyBudget',
+  'subject',
   'message',
+  'leadScore',
   'source',
   'status',
   'isRead',
 ];
+
+// Whitelist of fields an admin may edit via the general lead update endpoint.
+const updatableLeadFields = ['status', 'isRead', 'leadScore', 'subject', 'serviceInterest'];
 
 const createLead = async (req, res) => {
   try {
@@ -55,6 +84,7 @@ const createLead = async (req, res) => {
       company,
       serviceInterest,
       monthlyBudget,
+      subject,
       message,
       source,
       status,
@@ -63,7 +93,7 @@ const createLead = async (req, res) => {
     } = req.body;
 
     if (!name || !email) {
-      return res.status(400).json({ message: 'Name and email are required' });
+      return sendError(res, { status: 400, message: 'Name and email are required' });
     }
 
     // The v2 Checkbox widget posts the token as `g-recaptcha-response`; also
@@ -73,7 +103,7 @@ const createLead = async (req, res) => {
     const enforceRecaptcha = isRecaptchaEnforced();
 
     if (enforceRecaptcha && !recaptchaResponse) {
-      return res.status(400).json({ message: 'reCAPTCHA token is required' });
+      return sendError(res, { status: 400, message: 'reCAPTCHA token is required' });
     }
 
     if (enforceRecaptcha) {
@@ -81,10 +111,11 @@ const createLead = async (req, res) => {
 
       if (!verification.success) {
         if (verification.reason === 'service_unavailable') {
-          return res.status(503).json({ message: 'reCAPTCHA verification service unavailable' });
+          return sendError(res, { status: 503, message: 'reCAPTCHA verification service unavailable' });
         }
 
-        return res.status(403).json({
+        return sendError(res, {
+          status: 403,
           message: 'reCAPTCHA verification failed',
           errors: verification.errors || [],
         });
@@ -98,40 +129,57 @@ const createLead = async (req, res) => {
       company,
       serviceInterest,
       monthlyBudget,
+      subject,
       message,
+      leadScore: computeLeadScore({ monthlyBudget, phone, company, serviceInterest, message }),
       source: source || 'website',
       status: status || 'new',
       isRead: typeof isRead === 'boolean' ? isRead : false,
     });
 
-    const targetEmail = process.env.SMTP_USER || process.env.ADMIN_EMAIL || 'admin@boostvertex.com';
-
     try {
-      await sendEmail({
-        to: targetEmail,
-        subject: 'New lead received from Boost Vertex website',
-        html: `
-          <h3>New Lead</h3>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-          <p><strong>Company:</strong> ${company || 'N/A'}</p>
-          <p><strong>Service Interest:</strong> ${serviceInterest || 'N/A'}</p>
-          <p><strong>Monthly Budget:</strong> ${monthlyBudget || 'N/A'}</p>
-          <p><strong>Message:</strong> ${message || 'No message provided'}</p>
-        `,
-        text: `New lead: ${name} (${email})`,
-      });
+      // Respect the admin's notification preferences / target address when set.
+      const admin = await Admin.findOne().select('notificationEmail notificationPrefs');
+      const prefs = admin && admin.notificationPrefs ? admin.notificationPrefs : null;
+      const notifyEnabled = !prefs || prefs.newLead !== false;
+
+      if (notifyEnabled) {
+        const targetEmail = (admin && admin.notificationEmail)
+          || process.env.SMTP_USER
+          || process.env.ADMIN_EMAIL
+          || 'admin@boostvertex.com';
+
+        await sendEmail({
+          to: targetEmail,
+          subject: 'New lead received from Boost Vertex website',
+          html: `
+            <h3>New Lead</h3>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+            <p><strong>Company:</strong> ${company || 'N/A'}</p>
+            <p><strong>Service Interest:</strong> ${serviceInterest || 'N/A'}</p>
+            <p><strong>Monthly Budget:</strong> ${monthlyBudget || 'N/A'}</p>
+            <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
+            <p><strong>Message:</strong> ${message || 'No message provided'}</p>
+          `,
+          text: `New lead: ${name} (${email})`,
+        });
+      }
     } catch (error) {
-      console.warn('Lead notification skipped because SMTP is unavailable:', error.message);
+      console.warn('Lead notification skipped:', error.message);
     }
 
-    res.status(201).json({
+    return sendSuccess(res, {
+      status: 201,
       message: 'Lead submitted successfully',
-      lead,
+      data: lead,
+      extra: {
+        lead,
+      },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Unable to submit lead' });
+    return sendError(res, { message: error.message || 'Unable to submit lead' });
   }
 };
 
@@ -148,9 +196,19 @@ const getLeads = async (req, res) => {
 
     const pagination = buildPaginationMeta(page, limit, total);
 
-    res.status(200).json({ data: leads, pagination });
+    return sendSuccess(res, { message: 'Leads fetched successfully', data: leads, extra: { pagination } });
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Unable to fetch leads' });
+    return sendError(res, { message: error.message || 'Unable to fetch leads' });
+  }
+};
+
+const getLeadById = async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) return sendError(res, { status: 404, message: 'Lead not found' });
+    return sendSuccess(res, { message: 'Lead fetched successfully', data: lead });
+  } catch (error) {
+    return sendError(res, { message: error.message || 'Unable to fetch lead' });
   }
 };
 
@@ -175,7 +233,7 @@ const exportLeads = async (req, res) => {
     });
     res.status(200).send(csv);
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Unable to export leads' });
+    return sendError(res, { message: error.message || 'Unable to export leads' });
   }
 };
 
@@ -185,18 +243,18 @@ const updateLeadStatus = async (req, res) => {
     const { status } = req.body;
 
     if (!status) {
-      return res.status(400).json({ message: 'Status is required' });
+      return sendError(res, { status: 400, message: 'Status is required' });
     }
 
     const lead = await Lead.findByIdAndUpdate(id, { status }, { new: true });
 
     if (!lead) {
-      return res.status(404).json({ message: 'Lead not found' });
+      return sendError(res, { status: 404, message: 'Lead not found' });
     }
 
-    res.status(200).json({ message: 'Lead status updated', lead });
+    return sendSuccess(res, { message: 'Lead status updated', data: lead });
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Unable to update lead status' });
+    return sendError(res, { message: error.message || 'Unable to update lead status' });
   }
 };
 
@@ -208,23 +266,68 @@ const updateLeadReadState = async (req, res) => {
     const lead = await Lead.findById(id);
 
     if (!lead) {
-      return res.status(404).json({ message: 'Lead not found' });
+      return sendError(res, { status: 404, message: 'Lead not found' });
     }
 
     const nextReadState = typeof isRead === 'boolean' ? isRead : !lead.isRead;
     lead.isRead = nextReadState;
     await lead.save();
 
-    res.status(200).json({ message: 'Lead read state updated', lead });
+    return sendSuccess(res, {
+      message: 'Lead read state updated',
+      data: lead,
+      extra: { lead },
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Unable to update lead read state' });
+    return sendError(res, { message: error.message || 'Unable to update lead read state' });
+  }
+};
+
+const updateLead = async (req, res) => {
+  try {
+    const updates = {};
+    updatableLeadFields.forEach((field) => {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return sendError(res, { status: 400, message: 'No updatable fields provided' });
+    }
+
+    const lead = await Lead.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+    if (!lead) return sendError(res, { status: 404, message: 'Lead not found' });
+
+    return sendSuccess(res, {
+      message: 'Lead updated successfully',
+      data: lead,
+      extra: { lead },
+    });
+  } catch (error) {
+    return sendError(res, { status: 400, message: error.message || 'Unable to update lead' });
+  }
+};
+
+const deleteLead = async (req, res) => {
+  try {
+    const lead = await Lead.findByIdAndDelete(req.params.id);
+    if (!lead) return sendError(res, { status: 404, message: 'Lead not found' });
+    return sendSuccess(res, {
+      message: 'Lead deleted successfully',
+      data: null,
+      extra: { lead },
+    });
+  } catch (error) {
+    return sendError(res, { message: error.message || 'Unable to delete lead' });
   }
 };
 
 module.exports = {
   createLead,
   getLeads,
+  getLeadById,
   exportLeads,
   updateLeadStatus,
   updateLeadReadState,
+  updateLead,
+  deleteLead,
 };

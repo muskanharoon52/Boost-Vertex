@@ -1,4 +1,5 @@
 const Lead = require('../models/Lead');
+const Admin = require('../models/Admin');
 const Service = require('../models/Service');
 const Blog = require('../models/Blog');
 const CaseStudy = require('../models/CaseStudy');
@@ -7,6 +8,7 @@ const Client = require('../models/Client');
 const Industry = require('../models/Industry');
 const BlogComment = require('../models/BlogComment');
 const { getAnalyticsSummary } = require('../middleware/apiLogger');
+const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 const getPeriodStart = (period) => {
   const now = new Date();
@@ -122,63 +124,72 @@ const getDashboardSummary = async (req, res) => {
 
     const avgRating = testimonialStats.length > 0 ? testimonialStats[0].averageRating : 0;
 
-    res.status(200).json({
-      summary: {
-        // Content counts
-        period,
-        totalPublishedContent: serviceCount + blogCount + caseStudyCount,
-        services: {
-          published: serviceCount,
-          unpublished: serviceUnpublishedCount,
-          total: serviceCount + serviceUnpublishedCount,
-        },
-        blogs: {
-          published: blogCount,
-          unpublished: blogUnpublishedCount,
-          total: blogCount + blogUnpublishedCount,
-        },
-        caseStudies: {
-          published: caseStudyCount,
-          unpublished: caseStudyUnpublishedCount,
-          total: caseStudyCount + caseStudyUnpublishedCount,
-        },
-        industries: {
-          published: industryCount,
-          total: industryCount,
-        },
-        clients: {
-          published: clientCount,
-          total: clientCount,
-        },
-        testimonials: {
-          published: testimonialCount,
-          unpublished: testimonialUnpublishedCount,
-          total: testimonialCount + testimonialUnpublishedCount,
-          averageRating: Number(avgRating.toFixed(1)),
-        },
-
-        // Lead metrics
-        leads: {
-          total: leadCount,
-          unread: unreadLeadsCount,
-          byStatus: leadsByStatus.reduce((acc, item) => {
-            acc[item._id] = item.count;
-            return acc;
-          }, {}),
-        },
-        leadSources,
-        topServices,
-        notifications: {
-          unreadLeads: unreadLeadsCount,
-          pendingComments,
-          draftTestimonials,
-          total: unreadLeadsCount + pendingComments + draftTestimonials,
-        },
+    const summary = {
+      period,
+      totalPublishedContent: serviceCount + blogCount + caseStudyCount,
+      services: {
+        published: serviceCount,
+        unpublished: serviceUnpublishedCount,
+        total: serviceCount + serviceUnpublishedCount,
       },
-      recentLeads,
-      recentContactMessages,
-      recentContent,
+      blogs: {
+        published: blogCount,
+        unpublished: blogUnpublishedCount,
+        total: blogCount + blogUnpublishedCount,
+      },
+      caseStudies: {
+        published: caseStudyCount,
+        unpublished: caseStudyUnpublishedCount,
+        total: caseStudyCount + caseStudyUnpublishedCount,
+      },
+      industries: {
+        published: industryCount,
+        total: industryCount,
+      },
+      clients: {
+        published: clientCount,
+        total: clientCount,
+      },
+      testimonials: {
+        published: testimonialCount,
+        unpublished: testimonialUnpublishedCount,
+        total: testimonialCount + testimonialUnpublishedCount,
+        averageRating: Number(avgRating.toFixed(1)),
+      },
+      leads: {
+        total: leadCount,
+        unread: unreadLeadsCount,
+        byStatus: leadsByStatus.reduce((acc, item) => {
+          acc[item._id] = item.count;
+          return acc;
+        }, {}),
+      },
+      leadSources,
       topServices,
+      notifications: {
+        unreadLeads: unreadLeadsCount,
+        pendingComments,
+        draftTestimonials,
+        total: unreadLeadsCount + pendingComments + draftTestimonials,
+      },
+    };
+
+    return sendSuccess(res, {
+      message: 'Dashboard summary fetched successfully',
+      data: {
+        summary,
+        recentLeads,
+        recentContactMessages,
+        recentContent,
+        topServices,
+      },
+      extra: {
+        summary,
+        recentLeads,
+        recentContactMessages,
+        recentContent,
+        topServices,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message || 'Unable to fetch dashboard summary' });
@@ -188,13 +199,84 @@ const getDashboardSummary = async (req, res) => {
 const getAnalytics = async (req, res) => {
   try {
     const analytics = getAnalyticsSummary();
-    res.status(200).json({
+    return sendSuccess(res, {
       message: 'Analytics data retrieved successfully',
-      analytics,
+      data: analytics,
+      extra: { analytics },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Unable to fetch analytics' });
+    return sendError(res, { status: 500, message: error.message || 'Unable to fetch analytics' });
   }
 };
 
-module.exports = { getDashboardSummary, getAnalytics };
+const getNotificationSettings = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin._id).lean();
+    if (!admin) return sendError(res, { status: 404, message: 'Admin not found' });
+
+    return sendSuccess(res, {
+      message: 'Notification settings fetched successfully',
+      data: {
+        notificationEmail: admin.notificationEmail || '',
+        notificationPrefs: {
+          newContactMessage: admin.notificationPrefs?.newContactMessage ?? true,
+          newLead: admin.notificationPrefs?.newLead ?? true,
+          leadUpdated: admin.notificationPrefs?.leadUpdated ?? true,
+          leadDeleted: admin.notificationPrefs?.leadDeleted ?? true,
+          serviceUpdated: admin.notificationPrefs?.serviceUpdated ?? true,
+        },
+      },
+    });
+  } catch (error) {
+    return sendError(res, { status: 500, message: error.message || 'Unable to fetch notification settings' });
+  }
+};
+
+const updateNotificationSettings = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin._id);
+    if (!admin) return sendError(res, { status: 404, message: 'Admin not found' });
+
+    const notificationEmail = req.body.notificationEmail;
+    if (notificationEmail !== undefined && notificationEmail !== null && notificationEmail !== '') {
+      const normalizedEmail = String(notificationEmail).trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+        return sendError(res, { status: 400, message: 'Notification email is invalid' });
+      }
+      admin.notificationEmail = normalizedEmail;
+    } else if (notificationEmail === '') {
+      admin.notificationEmail = '';
+    }
+
+    if (req.body.notificationPrefs && typeof req.body.notificationPrefs === 'object') {
+      admin.notificationPrefs = {
+        ...admin.notificationPrefs.toObject ? admin.notificationPrefs.toObject() : admin.notificationPrefs,
+        newContactMessage: req.body.notificationPrefs.newContactMessage ?? admin.notificationPrefs?.newContactMessage ?? true,
+        newLead: req.body.notificationPrefs.newLead ?? admin.notificationPrefs?.newLead ?? true,
+        leadUpdated: req.body.notificationPrefs.leadUpdated ?? admin.notificationPrefs?.leadUpdated ?? true,
+        leadDeleted: req.body.notificationPrefs.leadDeleted ?? admin.notificationPrefs?.leadDeleted ?? true,
+        serviceUpdated: req.body.notificationPrefs.serviceUpdated ?? admin.notificationPrefs?.serviceUpdated ?? true,
+      };
+    }
+
+    await admin.save();
+
+    return sendSuccess(res, {
+      message: 'Notification settings updated successfully',
+      data: {
+        notificationEmail: admin.notificationEmail || '',
+        notificationPrefs: {
+          newContactMessage: admin.notificationPrefs?.newContactMessage ?? true,
+          newLead: admin.notificationPrefs?.newLead ?? true,
+          leadUpdated: admin.notificationPrefs?.leadUpdated ?? true,
+          leadDeleted: admin.notificationPrefs?.leadDeleted ?? true,
+          serviceUpdated: admin.notificationPrefs?.serviceUpdated ?? true,
+        },
+      },
+    });
+  } catch (error) {
+    return sendError(res, { status: 400, message: error.message || 'Unable to update notification settings' });
+  }
+};
+
+module.exports = { getDashboardSummary, getAnalytics, getNotificationSettings, updateNotificationSettings };

@@ -23,6 +23,53 @@ const adminSchema = new mongoose.Schema(
       type: String,
       default: 'admin',
     },
+    jobTitle: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    department: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    bio: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    avatarUrl: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    avatarPublicId: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    language: {
+      type: String,
+      trim: true,
+      default: 'en',
+    },
+    timezone: {
+      type: String,
+      trim: true,
+      default: 'UTC',
+    },
+    notificationEmail: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    notificationPrefs: {
+      newContactMessage: { type: Boolean, default: true },
+      newLead: { type: Boolean, default: true },
+      leadUpdated: { type: Boolean, default: true },
+      leadDeleted: { type: Boolean, default: true },
+      serviceUpdated: { type: Boolean, default: true },
+    },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
   },

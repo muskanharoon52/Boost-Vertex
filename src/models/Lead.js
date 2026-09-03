@@ -36,9 +36,19 @@ const leadSchema = new mongoose.Schema(
       ],
       trim: true,
     },
+    subject: {
+      type: String,
+      trim: true,
+    },
     message: {
       type: String,
       trim: true,
+    },
+    leadScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
     source: {
       type: String,

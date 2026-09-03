@@ -79,9 +79,11 @@ const seoRoutes = require('./routes/seoRoutes');
 const legalRoutes = require('./routes/legalRoutes');
 const technicalSeoRoutes = require('./routes/technicalSeoRoutes');
 const mediaRoutes = require('./routes/mediaRoutes');
+const contactMessageRoutes = require('./routes/contactMessageRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
+app.use('/api/contact-messages', contactMessageRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/blog-comments', blogCommentRoutes);
@@ -100,6 +102,7 @@ app.use('/api/admin', adminRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
+    success: false,
     message: 'Route not found',
   });
 });
@@ -108,6 +111,7 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
 
   res.status(err.statusCode || 500).json({
+    success: false,
     message: err.message || 'Internal server error',
   });
 });

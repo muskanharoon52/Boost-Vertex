@@ -94,11 +94,6 @@ export function createApiClient({
     health: () => request('/health'),
 
     auth: {
-      register: async (payload) => {
-        const response = await request('/auth/register', { method: 'POST', body: payload });
-        if (response.token) storage.setItem(tokenKey, response.token);
-        return response;
-      },
       login: async (email, password) => {
         const response = await request('/auth/login', {
           method: 'POST',

@@ -4,10 +4,12 @@ const mediaSchema = new mongoose.Schema(
   {
     url: { type: String, required: true, trim: true },
     publicId: { type: String, required: true, unique: true, trim: true },
-    resourceType: { type: String, enum: ['image', 'video'], required: true },
+    resourceType: { type: String, enum: ['image', 'video', 'raw'], required: true },
     mimeType: { type: String, required: true, trim: true },
     originalName: { type: String, required: true, trim: true },
+    title: { type: String, trim: true, default: '' },
     altText: { type: String, trim: true, default: '' },
+    tags: [{ type: String, trim: true }],
     folder: { type: String, trim: true, default: 'boost-vertex' },
     bytes: Number,
     width: Number,
